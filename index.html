@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TOEIC 700+ 雲端智慧單字庫 v6.2</title>
+  <title>TOEIC 700+ 雲端智慧單字庫 v6.3</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -41,7 +41,7 @@
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-3">
         <i class="fa-solid fa-graduation-cap text-yellow-400 text-2xl"></i>
-        <h1 class="text-xl font-bold tracking-wide">TOEIC 700+ 雲端智慧單字庫 <span class="text-xs bg-blue-600 px-2 py-0.5 rounded-full">v6.2</span></h1>
+        <h1 class="text-xl font-bold tracking-wide">TOEIC 700+ 雲端智慧單字庫 <span class="text-xs bg-blue-600 px-2 py-0.5 rounded-full">v6.3</span></h1>
       </div>
       <div id="auth-section" class="flex items-center gap-4 text-sm">
         <span id="user-display" class="hidden text-slate-300"></span>
@@ -80,7 +80,7 @@
       </div>
       <div class="text-sm text-slate-500 bg-slate-100 px-4 py-2 rounded-xl flex items-center gap-2">
         <i class="fa-solid fa-circle-info text-blue-500"></i>
-        <span>狀態更改後將會自動同步至雲端資料庫</span>
+        <span>進度與發音模組已自動優化，完美適應 Mac/iPhone/Android 標準美音</span>
       </div>
     </div>
 
@@ -133,10 +133,10 @@
     const db = firebase.firestore();
 
     // ==========================================
-    // 📚 核心單字資料庫 (包含原本 9 個與全新 20 個)
+    // 📚 核心單字資料庫
     // ==========================================
     const defaultVocabularyList = [
-      // 情境一：人事與招募 (9個)
+      // 情境一：人事與招募
       { id: "v1", category: "recruitment", word: "Candidate", ipa: "[ˈkændɪdət]", translation: "候選人、求職者", etymology: "來自拉丁文 <span class='text-red-500 font-bold'>candidus</span>（白色）。古羅馬候選人都會穿著「純白色外袍」象徵廉潔。", hint: "穿白色外袍的人 ➔ 候選人", collocation: "qualified candidate", collocationTranslation: "合格的候選人", sentence: "The human resources department is currently screening resumes to find the most qualified candidate.", sentenceTranslation: "人力資源部門目前正在篩選履歷，以尋找最合適的候選人。" },
       { id: "v2", category: "recruitment", word: "Vacancy", ipa: "[ˈveɪkənsi]", translation: "空缺、職缺", etymology: "字根 <span class='text-red-500 font-bold'>vac-</span> 表示「空的」（如 vacation 假期、vacuum 真空）。-ancy 表示名詞狀態。", hint: "處於空置的狀態 ➔ 職缺", collocation: "fill a vacancy", collocationTranslation: "填補職缺", sentence: "The company has a vacancy for a marketing specialist.", sentenceTranslation: "這家公司有一個行銷專員的職缺。" },
       { id: "v3", category: "recruitment", word: "Resume", ipa: "[ˈrezəmeɪ]", translation: "履歷表", etymology: "字首 <span class='text-red-500 font-bold'>re-</span>（重新）+ <span class='text-red-500 font-bold'>sume</span>（拿取）。原本是法語，字面意思是「重新拿出來的概述」。", hint: "重新拿出來的概述 ➔ 履歷表", collocation: "submit a resume", collocationTranslation: "投遞履歷", sentence: "Please submit a resume and a cover letter to apply for the position.", sentenceTranslation: "申請該職位請提交一份履歷與自薦信。" },
@@ -147,7 +147,7 @@
       { id: "v8", category: "recruitment", word: "Personnel", ipa: "[ˌpɜːrsəˈnel]", translation: "（全體）員工、人事部門", etymology: "來自 person（人），後綴 -nel 強調整體人員。", hint: "拼寫注意兩個n與一個l ➔ 全體人員", collocation: "personnel department", collocationTranslation: "人事部門", sentence: "Only authorized personnel are allowed inside the server room.", sentenceTranslation: "只有授權人員才允許進入伺服器機房。" },
       { id: "v9", category: "recruitment", word: "Probation", ipa: "[proʊˈbeɪʃn]", translation: "試用期、緩刑", etymology: "來自 probe（探索、檢驗），字尾 -ation 表示期間、狀態。", hint: "用來檢驗你的期間 ➔ 試用期", collocation: "three-month probation", collocationTranslation: "三個月試用期", sentence: "After completing the probation period, he was offered a permanent contract.", sentenceTranslation: "在完成試用期後，他獲得了一份正式合約。" },
 
-      // 情境二：合約與談判 (20個全新高頻字)
+      // 情境二：合約與談判
       { id: "v10", category: "contract", word: "Agreement", ipa: "[əˈɡriːmənt]", translation: "協定、同意、合約", etymology: "動詞 agree（同意）+ 名詞字尾 -ment。", hint: "彼此達成共識的結果 ➔ 協定", collocation: "reach an agreement", collocationTranslation: "達成協定", sentence: "After hours of discussion, both companies finally reached an agreement.", sentenceTranslation: "經過數小時的討論，兩家公司終於達成了協定。" },
       { id: "v11", category: "contract", word: "Contract", ipa: "[ˈkɑːntrækt]", translation: "合約、契約 (n.) / 收縮 (v.)", etymology: "字首 <span class='text-red-500 font-bold'>con-</span>（共同）+ 字根 <span class='text-red-500 font-bold'>tract</span>（拉）。把雙方拉在一起拉緊約束。", hint: "共同拉緊的約束 ➔ 合約", collocation: "sign a contract", collocationTranslation: "簽署合約", sentence: "Please review the clauses carefully before you sign the contract.", sentenceTranslation: "在您簽署合約前，請仔細審閱條款。" },
       { id: "v12", category: "contract", word: "Negotiate", ipa: "[nɪˈɡoʊʃieɪt]", translation: "談判、協商", etymology: "來自拉丁文 neg-（不）+ otium（空閒、休閒）。字面意思是「不能閒著（要努力辦事/談判）」。", hint: "雙方不閒著、努力爭取權益 ➔ 談判", collocation: "negotiate a deal", collocationTranslation: "談判交易", sentence: "The purchasing manager will negotiate a better price with the supplier.", sentenceTranslation: "採購經理將與供應商談判以爭取更好的價格。" },
@@ -162,7 +162,7 @@
       { id: "v21", category: "contract", word: "Resolve", ipa: "[rɪˈzɑːlv]", translation: "解決（爭端）、下決心", etymology: "字首 <span class='text-red-500 font-bold'>re-</span>（再）+ 字根 <span class='text-red-500 font-bold'>solv/solut</span>（鬆開、溶解）。把糾結的問題鬆開。", hint: "把糾結的線重新解開 ➔ 解決", collocation: "resolve a dispute", collocationTranslation: "解決爭端", sentence: "The legal teams are working hard to resolve the contract dispute.", sentenceTranslation: "法律團隊正努力解決合約糾紛。" },
       { id: "v22", category: "contract", word: "Liability", ipa: "[ˌlaɪəˈbɪləti]", translation: "法律責任、債務、累贅", etymology: "來自 liable（應負責的），字尾 -bility 表示名詞狀態。", hint: "必須承擔的責任 ➔ 法律責任", collocation: "limit liability", collocationTranslation: "限制法律責任", sentence: "The manufacturer accepted full liability for the defective products.", sentenceTranslation: "製造商接受對缺陷產品承擔全部法律責任。" },
       { id: "v23", category: "contract", word: "Penalty", ipa: "[ˈpenəlti]", translation: "罰款、處罰", etymology: "來自 pen-（處罰、痛苦，如 pain 痛、penitent 悔改的）。", hint: "讓你感到痛苦的罰款 ➔ 罰金", collocation: "late penalty", collocationTranslation: "滯納金、逾期罰款", sentence: "There is a strict penalty for late payments specified in the contract.", sentenceTranslation: "合約中明確規定了對逾期付款的嚴格罰款。" },
-      { id: "v24", category: "contract", word: "Draft", ipa: "[dræft]", translation: "草稿、草擬 (n./v.)", etymology: "與 draw（拉、畫）同源，拉出大綱框架的圖紙。", hint: "拉出的大致輪廓 ➔ 草擬", collocation: "draft a contract", collocationTranslation: "起草合約", sentence: "The legal department has prepared the first draft of the agreement.", sentenceTranslation: "法律部門已準備好該協定的第一份草稿。" },
+      { id: "v24", category: "contract", word: "Draft", ipa: "[dræft]", translation: "草稿、草擬 (n./v.)", etymology: "與 draw（拉、畫）同源，拉出大綱框架 of 圖紙。", hint: "拉出的大致輪廓 ➔ 草擬", collocation: "draft a contract", collocationTranslation: "起草合約", sentence: "The legal department has prepared the first draft of the agreement.", sentenceTranslation: "法律部門已準備好該協定的第一份草稿。" },
       { id: "v25", category: "contract", word: "Consent", ipa: "[kənˈsent]", translation: "同意、贊成", etymology: "字首 <span class='text-red-500 font-bold'>con-</span>（共同）+ 字根 <span class='text-red-500 font-bold'>sent</span>（感覺）。大家感覺一樣、有共鳴。", hint: "大家感覺一致 ➔ 同意", collocation: "written consent", collocationTranslation: "書面同意書", sentence: "Neither party can disclose confidential data without written consent.", sentenceTranslation: "未經書面同意，任何一方均不得透露機密數據。" },
       { id: "v26", category: "contract", word: "Execute", ipa: "[ˈeksɪkjuːt]", translation: "執行、履行（合約等）", etymology: "字首 <span class='text-red-500 font-bold'>ex-</span>（出）+ 字根 <span class='text-red-500 font-bold'>secut/sequ</span>（跟隨）。一路跟隨貫徹到底。", hint: "貫徹跟隨到底 ➔ 執行/履行", collocation: "execute a contract", collocationTranslation: "簽署並履行合約", sentence: "Once the document is signed, we can immediately execute the contract.", sentenceTranslation: "文件一經簽署，我們即可立刻履行合約。" },
       { id: "v27", category: "contract", word: "Explicit", ipa: "[ɪkˈsplɪsɪt]", translation: "明確的、顯著的", etymology: "字首 <span class='text-red-500 font-bold'>ex-</span>（出）+ 字根 <span class='text-red-500 font-bold'>plic</span>（重疊、折疊）。把折疊的紙張攤開來給你看。", hint: "把折疊的部分攤開 ➔ 明確清楚的", collocation: "explicit terms", collocationTranslation: "明確條款", sentence: "We need explicit terms regarding the delivery schedule.", sentenceTranslation: "我們需要關於交付時程表的明確條款。" },
@@ -171,7 +171,7 @@
     ];
 
     // ==========================================
-    // 💡 點擊迷你智慧字典庫 (例句中英文點擊翻譯)
+    // 💡 點擊迷你智慧字典庫
     // ==========================================
     const miniDict = {
       "human": "[ˈhjuːmən] (adj.) 人類的、人性的",
@@ -306,7 +306,7 @@
     // 🧠 系統全局變數
     // ==========================================
     let currentUser = null;
-    let userProgress = {}; // 格式: { wordId: "fuzzy" | "clear" }
+    let userProgress = {};
     let currentFilter = 'all';
 
     // DOM 元素
@@ -330,7 +330,7 @@
     let popoverAudioWord = "";
 
     // ==========================================
-    // 🔐 帳號安全管理機制 (Authentication)
+    // 🔐 帳號安全管理機制
     // ==========================================
     authSwitchBtn.addEventListener('click', () => {
       isRegisterMode = !isRegisterMode;
@@ -352,7 +352,6 @@
       }
 
       if (isRegisterMode) {
-        // 註冊
         auth.createUserWithEmailAndPassword(email, password)
           .then(userCredential => {
             currentUser = userCredential.user;
@@ -360,7 +359,6 @@
           })
           .catch(error => showAuthError("註冊失敗：" + translateAuthError(error.code)));
       } else {
-        // 登入
         auth.signInWithEmailAndPassword(email, password)
           .then(userCredential => {
             currentUser = userCredential.user;
@@ -378,7 +376,6 @@
       });
     });
 
-    // 監聽 Firebase 登入狀態
     auth.onAuthStateChanged(user => {
       if (user) {
         currentUser = user;
@@ -423,7 +420,6 @@
     // 💾 雲端資料庫同步機制 (Cloud Firestore)
     // ==========================================
     function initUserDatabase(uid) {
-      // 註冊時，在雲端自動初始化預設的 29 個單字卡，預設學習狀態皆為 "fuzzy" (模糊)
       const batch = db.batch();
       defaultVocabularyList.forEach(item => {
         const docRef = db.collection('users').doc(uid).collection('progress').doc(item.id);
@@ -442,7 +438,6 @@
         .then(snapshot => {
           userProgress = {};
           if (snapshot.empty) {
-            // 如果剛註冊且無紀錄，自動重新執行雲端初始化
             initUserDatabase(uid);
             return;
           }
@@ -455,7 +450,7 @@
         .catch(err => {
           console.error("載入雲端資料失敗：", err);
           toggleView(true);
-          renderVocabulary(); // 即使載入失敗，仍載入本地預設視圖
+          renderVocabulary();
         });
     }
 
@@ -484,14 +479,12 @@
       defaultVocabularyList.forEach(item => {
         const status = userProgress[item.id] || 'fuzzy';
 
-        // 判斷當前篩選狀態
         if (currentFilter === 'fuzzy' && status !== 'fuzzy') return;
         if (currentFilter === 'clear' && status !== 'clear') return;
 
         const borderClass = status === 'clear' ? 'border-green-500 shadow-green-50' : 'border-yellow-400 shadow-yellow-50';
         const bgBadge = status === 'clear' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
 
-        // 將例句中的單字全部拆解並加上點擊事件
         const sentenceWords = item.sentence.split(' ');
         const wrappedSentence = sentenceWords.map(word => {
           const cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").toLowerCase();
@@ -591,18 +584,43 @@
     }
 
     // ==========================================
-    // 🔊 智慧語音發音模組 (TTS Engine)
+    // 🔊 智慧語音發音模組 - 智慧優化美音版 (TTS Engine)
     // ==========================================
     function playAudio(text) {
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // 停止目前播放的所有語音
+        window.speechSynthesis.cancel(); 
+        
         const utterance = new SpeechSynthesisUtterance(text);
+        const voices = window.speechSynthesis.getVoices();
+        
+        // 優先過濾高品質美語語音 (Mac OS: Samantha/Ava | Google Chrome: Google US English)
+        let selectedVoice = voices.find(voice => 
+          voice.lang.includes('en-US') && 
+          (voice.name.includes('Google') || voice.name.includes('Samantha') || voice.name.includes('Ava'))
+        );
+        
+        if (!selectedVoice) {
+          selectedVoice = voices.find(voice => voice.lang.includes('en-US'));
+        }
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+        
         utterance.lang = 'en-US';
-        utterance.rate = 0.85; // 商務學習最佳播放語速
+        utterance.rate = 0.82;   // 清晰朗讀與跟讀語速
+        utterance.pitch = 1.0;
+        
         window.speechSynthesis.speak(utterance);
       } else {
-        alert("非常抱歉，您的瀏覽器目前不支援語音發音功能！");
+        alert("不支援語音發音");
       }
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = function() {
+        window.speechSynthesis.getVoices();
+      };
     }
 
     // ==========================================
@@ -625,11 +643,9 @@
       popoverAudioWord = word;
 
       popoverBubble.style.display = 'block';
-      // 動態計算小氣泡位置，確保在單字正上方顯示
       popoverBubble.style.top = `${window.scrollY + rect.top - popoverBubble.offsetHeight - 10}px`;
       popoverBubble.style.left = `${window.scrollX + rect.left + (rect.width / 2) - (popoverBubble.offsetWidth / 2)}px`;
 
-      // 同步發出該點擊單字的標準美音
       playAudio(word);
     }
 
@@ -639,7 +655,6 @@
       }
     }
 
-    // 點擊網頁任何空白處即可關閉彈窗
     document.addEventListener('click', () => {
       popoverBubble.style.display = 'none';
     });
