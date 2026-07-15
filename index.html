@@ -1,472 +1,599 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TOEIC 700+ 雲端大數據單字庫 v7.1</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <style>
-    .word-card { transition: all 0.3s ease; }
-    .word-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-    /* 終極相容視覺：讓可點擊單字變成精美的互動標籤，在 Mac 上極易點選 */
-    .clickable-word { 
-      cursor: pointer; 
-      color: #2563eb;
-      font-weight: 500;
-      border-bottom: 2px dashed #3b82f6; 
-      display: inline-block; 
-      padding: 0 2px;
-      transition: all 0.2s;
-    }
-    .clickable-word:hover { 
-      background-color: #dbeafe; 
-      color: #1d4ed8; 
-      border-radius: 4px; 
-    }
-    /* 嵌入式即時翻譯面板：不再使用絕對定位，100% 解決 Mac 座標當機問題 */
-    .inline-translation-panel {
-      display: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOEIC 多益 700+ 雲端智慧單字庫 v6.8</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <style>
+        .custom-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+        .popover-bubble {
+            display: none;
+            position: absolute;
+            z-index: 100;
+            background: rgba(17, 24, 39, 0.95);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            max-width: 280px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .popover-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px 8px 0;
+            border-style: solid;
+            border-color: rgba(17, 24, 39, 0.95) transparent;
+            display: block;
+            width: 0;
+        }
+        .clickable-word {
+            color: #2563eb;
+            border-bottom: 1px dashed #93c5fd;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0 2px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .clickable-word:hover {
+            color: #1d4ed8;
+            background-color: #eff6ff;
+            border-bottom-color: #1d4ed8;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen font-sans">
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800 pb-12">
 
-  <nav class="bg-slate-900 text-white py-4 px-6 sticky top-0 z-40 shadow-md">
-    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-database text-yellow-400 text-2xl"></i>
-        <h1 class="text-xl font-bold tracking-wide">TOEIC 700+ 雲端動態大數據單字庫 <span class="text-xs bg-purple-600 px-2 py-0.5 rounded-full">v7.1</span></h1>
-      </div>
-      <div id="auth-section" class="flex items-center gap-4 text-sm">
-        <span id="user-display" class="hidden text-slate-300"></span>
-        <button id="logout-btn" class="hidden bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded transition">登出</button>
-      </div>
-    </div>
-  </nav>
+    <nav class="bg-white border-b border-slate-100 py-4 px-6 sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2.5 rounded-xl shadow-md shadow-blue-200">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">TOEIC 目標 700+</h1>
+                    <p class="text-xs text-slate-500 font-medium">雲端雙向發音單字庫 v6.8</p>
+                </div>
+            </div>
+            
+            <div id="user-panel" class="hidden flex items-center gap-4">
+                <span id="user-email" class="text-sm text-slate-600 font-medium"></span>
+                <button id="btn-logout" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+                    登出 <i class="fa-solid fa-right-from-bracket ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
 
-  <div id="auth-panel" class="max-w-md mx-auto my-12 p-8 bg-white rounded-2xl shadow-xl border border-slate-100">
-    <h2 class="text-2xl font-bold text-center text-slate-900 mb-6" id="auth-title">學員登入</h2>
-    <div class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-slate-600 mb-1">電子信箱 (Email)</label>
-        <input type="email" id="auth-email" placeholder="test@gmail.com" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-600 mb-1">密碼 (Password)</label>
-        <input type="password" id="auth-password" placeholder="請輸入密碼" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <button id="auth-submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition shadow-md">登入</button>
-      <div class="text-center text-sm text-slate-500 pt-2">
-        <span id="auth-switch-text">還沒有帳號嗎？</span>
-        <button id="auth-switch-btn" class="text-blue-600 font-semibold hover:underline">立即註冊新帳號</button>
-      </div>
-      <div id="auth-error" class="text-red-500 text-sm text-center hidden font-medium"></div>
-    </div>
-  </div>
-
-  <main id="main-content" class="max-w-6xl mx-auto px-4 py-8 hidden">
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
-      <div class="flex flex-wrap gap-2">
-        <button onclick="filterWords('all')" id="btn-all" class="px-5 py-2.5 rounded-xl font-semibold bg-blue-600 text-white shadow-md transition">全部載入單字 (<span id="count-all">0</span>)</button>
-        <button onclick="filterWords('fuzzy')" id="btn-fuzzy" class="px-5 py-2.5 rounded-xl font-semibold bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 transition">🟡 模糊複習 (<span id="count-fuzzy">0</span>)</button>
-        <button onclick="filterWords('clear')" id="btn-clear" class="px-5 py-2.5 rounded-xl font-semibold bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 transition">🟢 清楚掌握 (<span id="count-clear">0</span>)</button>
-      </div>
-      <div class="text-sm font-medium text-slate-600 bg-purple-50 text-purple-700 px-4 py-2 rounded-xl">
-        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> v7.1 嵌入式技術：完美相容所有 Mac 裝置，點擊即可就地翻譯！
-      </div>
-    </div>
-
-    <div id="vocabulary-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"></div>
-
-    <div class="text-center hidden mb-12" id="load-more-block">
-      <button id="load-more-btn" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg">
-        <i class="fa-solid fa-angles-down mr-2"></i> 載入下一批多益單字
-      </button>
-    </div>
-  </main>
-
-  <script>
-    // ==========================================
-    // 🛠️ FIREBASE 配置
-    // ==========================================
-    const firebaseConfig = {
-      apiKey: "AIzaSyBJngbs3_kCmJr-R6FxBqfwKblXyyu11Hg",
-      authDomain: "toeic-database.firebaseapp.com",
-      projectId: "toeic-database",
-      storageBucket: "toeic-database.firebasestorage.app",
-      messagingSenderId: "636706904817",
-      appId: "1:636706904817:web:8293ac935dfb29ddac2750",
-      measurementId: "G-S76H6VX1H0"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    // 系統變數
-    let currentUser = null;
-    let loadedVocabulary = []; 
-    let userProgress = {};     
-    let currentFilter = 'all';
-    const pageSize = 30;       
-    let lastVisibleDoc = null; 
-
-    let dynamicMiniDict = {};
-
-    // DOM 元素
-    const authPanel = document.getElementById('auth-panel');
-    const mainContent = document.getElementById('main-content');
-    const authEmail = document.getElementById('auth-email');
-    const authPassword = document.getElementById('auth-password');
-    const authSubmitBtn = document.getElementById('auth-submit-btn');
-    const authSwitchBtn = document.getElementById('auth-switch-btn');
-    const authSwitchText = document.getElementById('auth-switch-text');
-    const authTitle = document.getElementById('auth-title');
-    const authError = document.getElementById('auth-error');
-    const userDisplay = document.getElementById('user-display');
-    const logoutBtn = document.getElementById('logout-btn');
-    const loadMoreBlock = document.getElementById('load-more-block');
-    const loadMoreBtn = document.getElementById('load-more-btn');
-
-    let isRegisterMode = false;
-
-    authSwitchBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      isRegisterMode = !isRegisterMode;
-      authTitle.innerText = isRegisterMode ? "學員註冊" : "學員登入";
-      authSubmitBtn.innerText = isRegisterMode ? "立即註冊" : "登入";
-      authSwitchText.innerText = isRegisterMode ? "已經有帳號了？" : "還沒有帳號嗎？";
-      authSwitchBtn.innerText = isRegisterMode ? "立即登入" : "註冊新帳號";
-      authError.classList.add('hidden');
-    });
-
-    authSubmitBtn.addEventListener('click', () => {
-      const email = authEmail.value.trim();
-      const password = authPassword.value;
-      if (!email || !password) return showAuthError("欄位不可留白！");
-
-      if (isRegisterMode) {
-        auth.createUserWithEmailAndPassword(email, password)
-          .then(userCredential => { currentUser = userCredential.user; startApp(); })
-          .catch(error => showAuthError("註冊失敗：" + translateAuthError(error.code)));
-      } else {
-        auth.signInWithEmailAndPassword(email, password)
-          .then(userCredential => { currentUser = userCredential.user; startApp(); })
-          .catch(error => showAuthError("登入失敗：" + translateAuthError(error.code)));
-      }
-    });
-
-    logoutBtn.addEventListener('click', () => { auth.signOut().then(() => location.reload()); });
-    auth.onAuthStateChanged(user => { if (user) { currentUser = user; startApp(); } else { toggleView(false); } });
-
-    function showAuthError(msg) { authError.innerText = msg; authError.classList.remove('hidden'); }
-    function translateAuthError(code) {
-      if(code === 'auth/email-already-in-use') return '該信箱已被註冊。';
-      if(code === 'auth/weak-password') return '密碼最少需 6 碼。';
-      if(code === 'auth/wrong-password') return '密碼輸入錯誤。';
-      return '連線拒絕，請確認資料庫規則。';
-    }
-
-    function toggleView(isLoggedIn) {
-      if (isLoggedIn) {
-        authPanel.classList.add('hidden'); mainContent.classList.remove('hidden');
-        userDisplay.innerText = `👋 學員：${currentUser.email}`; userDisplay.classList.remove('hidden'); logoutBtn.classList.remove('hidden');
-      } else {
-        authPanel.classList.remove('hidden'); mainContent.classList.add('hidden'); userDisplay.classList.add('hidden'); logoutBtn.classList.add('hidden');
-      }
-    }
-
-    function startApp() {
-      toggleView(true);
-      db.collection('users').doc(currentUser.uid).collection('progress').get()
-        .then(snapshot => {
-          userProgress = {};
-          snapshot.forEach(doc => { userProgress[doc.id] = doc.data().status; });
-          loadedVocabulary = [];
-          lastVisibleDoc = null;
-          fetchGlobalVocab();
-        });
-    }
-
-    function fetchGlobalVocab() {
-      let query = db.collection('global_vocab').orderBy('id').limit(pageSize);
-      if (lastVisibleDoc) query = query.startAfter(lastVisibleDoc);
-
-      query.get().then(snapshot => {
-        if (snapshot.empty) {
-          loadMoreBlock.classList.add('hidden');
-          if(loadedVocabulary.length === 0) {
-            document.getElementById('vocabulary-container').innerHTML = `
-              <div class="col-span-full text-center p-8 bg-white rounded-2xl border border-dashed border-slate-300">
-                <p class="text-lg font-bold text-slate-600 mb-2">雲端大數據單字庫目前是空的！</p>
-                <p class="text-sm text-slate-400">請在 Console 貼上注入指令，將 5,000 個單字灌入資料庫中。</p>
-              </div>`;
-          }
-          return;
-        }
-
-        lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
+    <div id="auth-container" class="max-w-md mx-auto mt-12 p-8 bg-white rounded-2xl border border-slate-100 shadow-xl custom-shadow">
+        <h2 class="text-2xl font-extrabold text-slate-900 mb-2 text-center">開始你的多益衝刺</h2>
+        <p class="text-sm text-slate-500 text-center mb-6">登入後即可同步你與家人的專屬學習記錄</p>
         
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          loadedVocabulary.push(data);
-          if(data.word) dynamicMiniDict[data.word.toLowerCase()] = `[${data.ipa || ''}] ${data.translation}`;
-          if(data.collocation) dynamicMiniDict[data.collocation.toLowerCase()] = data.collocationTranslation || '';
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">電子信箱</label>
+                <input type="email" id="auth-email" placeholder="example@gmail.com" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">密碼</label>
+                <input type="password" id="auth-password" placeholder="請輸入 6 位數以上密碼" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+            </div>
+            
+            <div class="flex gap-3 pt-2">
+                <button id="btn-login" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-100">
+                    登入帳號
+                </button>
+                <button id="btn-register" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-bold transition-all">
+                    註冊新帳號
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main id="app-content" class="hidden max-w-5xl mx-auto px-6 mt-8">
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex gap-2">
+                <button onclick="filterVocab('all')" id="btn-filter-all" class="px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 text-sm font-bold rounded-xl transition-all">
+                    顯示全部 (29)
+                </button>
+                <button onclick="filterVocab('blurred')" id="btn-filter-blurred" class="px-4 py-2 bg-white border border-slate-200 hover:border-amber-400 text-slate-600 hover:text-amber-600 text-sm font-semibold rounded-xl transition-all">
+                    🟡 模糊複習
+                </button>
+                <button onclick="filterVocab('clear')" id="btn-filter-clear" class="px-4 py-2 bg-white border border-slate-200 hover:border-emerald-400 text-slate-600 hover:text-emerald-600 text-sm font-semibold rounded-xl transition-all">
+                    🟢 清楚
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 font-medium"><i class="fa-solid fa-circle-info mr-1"></i> 點擊例句中的單字可即時聽發音與查看 KK 音標及解釋</p>
+        </div>
+
+        <div id="vocab-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </main>
+
+    <div id="popover" class="popover-bubble">
+        <div class="flex justify-between items-center gap-4 border-b border-slate-700 pb-1.5 mb-1.5">
+            <strong id="pop-word" class="text-blue-300 font-bold text-base"></strong>
+            <span id="pop-ipa" class="text-slate-300 font-mono text-xs"></span>
+        </div>
+        <p id="pop-meaning" class="text-slate-100 font-medium"></p>
+    </div>
+
+    <script>
+        // ----------------- Firebase 金鑰 -----------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJngbs3_kCmJr-R6FxBqfwKblXyyu11Hg",
+            authDomain: "toeic-database.firebaseapp.com",
+            projectId: "toeic-database",
+            storageBucket: "toeic-database.firebasestorage.app",
+            messagingSenderId: "636706904817",
+            appId: "1:636706904817:web:8293ac935dfb29ddac2750",
+            measurementId: "G-S76H6VX1H0"
+        };
+
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ----------------- 多益 29 個核心單字資料庫 -----------------
+        const defaultVocabularyList = [
+            // 情境一：人事與招募 (9)
+            { id: "v1", category: "人事與招募", word: "Candidate", ipa: "[ˈkændɪdət]", meaning: "求職者，候選人", tip: "來自拉丁文 candidus (白色)。古羅馬時求職者會穿純白托加袍象徵公正與廉潔。", col: "qualified candidate", colMean: "合格的候選人", sentence: "The hiring manager is reviewing resumes to find a qualified candidate.", sentenceMean: "招聘經理正審查履歷，以尋找一位合格的候選人。" },
+            { id: "v2", category: "人事與招募", word: "Vacancy", ipa: "[ˈveɪkənsi]", meaning: "空缺，職缺", tip: "來自 vac- (空的)，如 vacation 是空下來的假期。-ancy 代表名詞狀態。", col: "fill a vacancy", colMean: "填補職缺", sentence: "We currently have a vacancy in our marketing department.", sentenceMean: "我們市場行銷部門目前有一個職缺。" },
+            { id: "v3", category: "人事與招募", word: "Resume", ipa: "[ˈrezəmeɪ]", meaning: "履歷表", tip: "re- (重新) + sume (拿、取)。字面意思是重新摘要、拿出個人的經歷概述。", col: "submit a resume", colMean: "投遞履歷", sentence: "Applicants are requested to submit a resume along with references.", sentenceMean: "申請人被要求提交一份履歷表和推薦信。" },
+            { id: "v4", category: "人事與招募", word: "Reference", ipa: "[ˈrefərəns]", meaning: "推薦信，介紹信，參考資料", tip: "re- (回) + fer (帶來)。帶來回饋你過往經歷的人或信件，作為佐證。", col: "provide references", colMean: "提供推薦人/推薦信", sentence: "Please provide references from your previous employers.", sentenceMean: "請提供你前雇主的推薦信。" },
+            { id: "v5", category: "人事與招募", word: "Recruit", ipa: "[rɪˈkruːt]", meaning: "招募 (v.) / 新兵，新進員工 (n.)", tip: "re- (再) + cruit (生長)。使團隊再度生長，即招收新血。", col: "recruit new talent", colMean: "招募新秀", sentence: "The company plans to recruit new software developers next month.", sentenceMean: "公司計劃下個月招募新的軟體開發人員。" },
+            { id: "v6", category: "人事與招募", word: "Undergo", ipa: "[ˌʌndərˈɡoʊ]", meaning: "經歷，接受（培訓、檢查等）", tip: "under- (在下面、承受) + go (走)。在考驗或程序之下走過去，引申為經歷、接受。", col: "undergo training", colMean: "接受培訓", sentence: "All new hires must undergo intensive orientation training.", sentenceMean: "所有新進員工都必須接受密集的新人培訓。" },
+            { id: "v7", category: "人事與招募", word: "Applicant", ipa: "[ˈæplɪkənt]", meaning: "申請人", tip: "apply (申請) + -ant (人)。前來應徵的人。", col: "successful applicant", colMean: "錄取者", sentence: "The successful applicant will start training next Monday.", sentenceMean: "錄取者將於下週一開始培訓。" },
+            { id: "v8", category: "人事與招募", word: "Personnel", ipa: "[ˌpɜːrsəˈnel]", meaning: "全體員工，人事部門", tip: "與 personal (個人的) 區分。重音在後方，指公司全體人事人員。", col: "personnel department", colMean: "人事部門", sentence: "Any changes in address should be reported to the personnel department.", sentenceMean: "任何地址變更皆應通報給人事部門。" },
+            { id: "v9", category: "人事與招募", word: "Probation", ipa: "[proʊˈbeɪʃn]", meaning: "試用期，考核期", tip: "prob- (測試)，如 prove (證明)。證明個人工作能力的觀察期。", col: "probation period", colMean: "試用期", sentence: "New employees are placed on a three-month probation period.", sentenceMean: "新員工有三個月的試用期。" },
+
+            // 情境二：合約與談判 (20)
+            { id: "v10", category: "合約與談判", word: "Agreement", ipa: "[əˈɡriːmənt]", meaning: "協定，協議", tip: "agree (同意) + -ment (名詞尾)。雙方達成共識的具體合約。", col: "reach an agreement", colMean: "達成協議", sentence: "After long negotiations, they finally reached an agreement.", sentenceMean: "經過漫長談判，他們終於達成了協議。" },
+            { id: "v11", category: "合約與談判", word: "Contract", ipa: "[ˈkɑːntrækt]", meaning: "合約，契約", tip: "con- (共同) + tract (拉)。共同拉攏雙方並綁在一起的法律文件。", col: "sign a contract", colMean: "簽訂合約", sentence: "Both parties are ready to sign the contract tomorrow morning.", sentenceMean: "雙方皆準備於明天早上簽署合約。" },
+            { id: "v12", category: "合約與談判", word: "Negotiate", ipa: "[nɪˈɡoʊʃieɪt]", meaning: "談判，協商", tip: "neg- (否認) + otium (空閒)。不讓自己閒著，為了權益與他人積極爭取、周旋。", col: "negotiate a deal", colMean: "談判一樁交易", sentence: "Our representative will negotiate the terms of the sale.", sentenceMean: "我們的代表將就銷售條款進行協商。" },
+            { id: "v13", category: "合約與談判", word: "Clause", ipa: "[klɔːz]", meaning: "條款，子句", tip: "來自 claudere (關閉、限制)。在合約中用來限制、定義權利義務的條目。", col: "termination clause", colMean: "終止條款", sentence: "The contract includes a strict confidentiality clause.", sentenceMean: "該合約包含一項嚴格的保密條款。" },
+            { id: "v14", category: "合約與談判", word: "Obligation", ipa: "[ˌɑːblɪˈɡeɪʃn]", meaning: "義務，責任", tip: "ob- (朝向) + lig (綁綁、綁定)。在法律上被綁在某項承諾上，不可推卸的事。", col: "meet an obligation", colMean: "履行義務", sentence: "We have a legal obligation to complete the project on time.", sentenceMean: "我們在法律上有按時完成該專案的義務。" },
+            { id: "v15", category: "合約與談判", word: "Bilateral", ipa: "[ˌbaɪˈlætərəl]", meaning: "雙邊的，雙方的", tip: "bi- (雙、兩個) + lateral (側、邊)。兩個側邊共同參與，即雙邊的協議。", col: "bilateral agreement", colMean: "雙邊協定", sentence: "The two nations signed a bilateral trade agreement yesterday.", sentenceMean: "兩國昨天簽署了一項雙邊貿易協定。" },
+            { id: "v16", category: "合約與談判", word: "Invalid", ipa: "[ɪnˈvælɪd]", meaning: "無效的", tip: "in- (無) + valid (有效的)。不具備法律效力的狀態。", col: "render invalid", colMean: "使之無效", sentence: "Without a proper signature, this document is rendered invalid.", sentenceMean: "若無妥當簽名，此文件即視為無效。" },
+            { id: "v17", category: "合約與談判", word: "Renew", ipa: "[rɪˈnuː]", meaning: "續約，更新", tip: "re- (重新) + new (新)。讓舊合約重新煥發新生，即為續約。", col: "renew a lease", colMean: "續訂租約", sentence: "They decided to renew their contract for another two years.", sentenceMean: "他們決定將合約再續簽兩年。" },
+            { id: "v18", category: "合約與談判", word: "Compromise", ipa: "[ˈkɑːmprəmaɪz]", meaning: "妥協，讓步", tip: "com- (共同) + promise (承諾)。雙方共同做出承諾並各退一步，達成和解。", col: "reach a compromise", colMean: "達成妥協", sentence: "To conclude the agreement, both sides had to compromise.", sentenceMean: "為達成協議，雙方都必須做出讓步。" },
+            { id: "v19", category: "合約與談判", word: "Breach", ipa: "[briːtʃ]", meaning: "違約，違反 (n./v.)", tip: "與 break (打破) 同源。打破合約規定，即違約。", col: "breach of contract", colMean: "違約", sentence: "The supplier is in breach of contract for late delivery.", sentenceMean: "供應商因延遲交貨而構成違約。" },
+            { id: "v20", category: "合約與談判", word: "Exclusivity", ipa: "[ˌekskluːˈsɪvəti]", meaning: "獨家性，排他性", tip: "exclude (排除) 的名詞派生。將其他人排除在外，即專屬或獨家。", col: "exclusivity agreement", colMean: "獨家代理協定", sentence: "The brand is negotiating an exclusivity deal with the retailer.", sentenceMean: "該品牌正與該零售商商討一項獨家代理協定。" },
+            { id: "v21", category: "合約與談判", word: "Resolve", ipa: "[rɪˈzɑːlv]", meaning: "解決，決心", tip: "re- (加強) + solve (鬆開)。將複雜糾結的矛盾徹底鬆開，即解決紛爭。", col: "resolve a dispute", colMean: "解決糾紛", sentence: "They held a meeting to resolve the pending contract issues.", sentenceMean: "他們召開會議以解決未決的合約問題。" },
+            { id: "v22", category: "合約與談判", word: "Liability", ipa: "[ˌlaɪəˈbɪləti]", meaning: "法律責任，賠償責任", tip: "liable (應負責的) + -ity (名詞尾)。因違法或疏忽而必須承擔的賠償責任。", col: "accept liability", colMean: "承擔責任", sentence: "The company denied any liability for the system failure.", sentenceMean: "公司否認對系統故障承擔任何責任。" },
+            { id: "v23", category: "合約與談判", word: "Penalty", ipa: "[ˈpenəlti]", meaning: "罰款，處罰", tip: "pen- (懲罰)，如 penal code (刑法)。因違規或違約而受到的罰金懲處。", col: "pay a penalty", colMean: "支付罰款", sentence: "A severe penalty will be imposed for breaking the rules.", sentenceMean: "違反規定將被處以嚴厲罰款。" },
+            { id: "v24", category: "合約與談判", word: "Draft", ipa: "[dræft]", meaning: "草稿，草擬", tip: "原意為拖、拉。拉出一個大概的框架輪廓，即草稿。", col: "draft a contract", colMean: "草擬合約", sentence: "The legal department is preparing a rough draft of the agreement.", sentenceMean: "法務部門正準備該協定的一份粗略草案。" },
+            { id: "v25", category: "合約與談判", word: "Consent", ipa: "[kənˈsent]", meaning: "同意，贊同 (n./v.)", tip: "con- (共同) + sent (感覺，如 sense)。雙方的感覺完全在一起，即同意。", col: "written consent", colMean: "書面同意", sentence: "No changes can be made without the written consent of both parties.", sentenceMean: "未經雙方書面同意，不得做任何修改。" },
+            { id: "v26", category: "合約與談判", word: "Execute", ipa: "[ˈeksɪkjuːt]", meaning: "執行，簽署生效", tip: "ex- (出來) + sequi (跟隨)。使合約後續的規定全部跟著實現，引申為執行或簽字生效。", col: "execute an agreement", colMean: "簽署協定使生效", sentence: "The executive team is ready to execute the transaction.", sentenceMean: "高階主管團隊已準備好執行此項交易。" },
+            { id: "v27", category: "合約與談判", word: "Explicit", ipa: "[ɪkˈsplɪsɪt]", meaning: "明確的，直白的", tip: "ex- (出來) + plic (摺疊)。把折起來的話攤開來說，即明確不含糊。", col: "explicit terms", colMean: "明確條款", sentence: "The contract needs to have explicit instructions on payment methods.", sentenceMean: "合約需要有關於付款方式的明確指示。" },
+            { id: "v28", category: "合約與談判", word: "Arbitration", ipa: "[ˌɑːrbɪˈtreɪʃn]", meaning: "仲裁，公斷", tip: "來自 arbiter (公斷人)。不走法院訴訟，由中立第三人進行的合約裁決。", col: "submit to arbitration", colMean: "交付仲裁", sentence: "The dispute was submitted to independent arbitration for resolution.", sentenceMean: "該糾紛已被提交給獨立仲裁機構進行解決。" },
+            { id: "v29", category: "合約與談判", word: "Terminate", ipa: "[ˈtɜːrmɪneɪt]", meaning: "終止，結束", tip: "termin- (界線、邊界)，如 terminal 終點站。使合約走到邊界，即終止合約。", col: "terminate a contract", colMean: "終止合約", sentence: "They reserved the right to terminate the agreement with 30 days' notice.", sentenceMean: "他們保留了提前 30 天通知終止協定的權利。" }
+        ];
+
+        // ----------------- 智慧字典 (例句單字點擊庫) -----------------
+        const miniDict = {
+            "hiring": "['haɪərɪŋ] (adj.) 招聘的，僱用的",
+            "manager": "['mænɪdʒər] (n.) 經理，負責人",
+            "reviewing": "[rɪ'vjuːɪŋ] (v.) 正在審查，審閱",
+            "resumes": "['rezəmeɪz] (n.) 履歷表 (複數)",
+            "find": "[faɪnd] (v.) 尋找，找到",
+            "qualified": "['kwɑːlɪfaɪd] (adj.) 合格的，勝任的",
+            "currently": "['kɜːrəntli] (adv.) 目前，現在",
+            "marketing": "['mɑːrkɪtɪŋ] (n.) 市場行銷",
+            "department": "[dɪ'pɑːrtmənt] (n.) 部門",
+            "applicants": "['æplɪkənts] (n.) 申請人 (複數)",
+            "requested": "[rɪ'kwestɪd] (v.) 被要求，請求",
+            "submit": "[səb'mɪt] (v.) 提交，遞交",
+            "along": "[ə'lɔːŋ] (prep.) 沿著，與...一起",
+            "with": "[wɪð] (prep.) 與，伴隨",
+            "references": "['refərənsɪz] (n.) 推薦信，推薦人 (複數)",
+            "provide": "[prə'vaɪd] (v.) 提供",
+            "previous": "['priːviəs] (adj.) 先前的，以前的",
+            "employers": "[ɪm'plɔɪərz] (n.) 雇主 (複數)",
+            "company": "['kʌmpəni] (n.) 公司",
+            "plans": "[plænz] (v.) 計劃 (單數動詞)",
+            "software": "['sɔːftwer] (n.) 軟體",
+            "developers": "[dɪ'veləpərz] (n.) 開發人員 (複數)",
+            "next": "[nekst] (adj.) 下一個的",
+            "month": "[mʌnθ] (n.) 月份",
+            "new": "[nuː] (adj.) 新的",
+            "hires": "['haɪərz] (n.) 新進員工 (複數)",
+            "must": "[mʌst] (aux.) 必須",
+            "intensive": "[ɪn'tensɪv] (adj.) 密集的，集中的",
+            "orientation": "[ˌɔːriən'teɪʃn] (n.) 新人職前培訓，定位",
+            "training": "['treɪnɪŋ] (n.) 培訓，訓練",
+            "successful": "[sək'sesfl] (adj.) 成功的，錄取的",
+            "applicant": "['æplɪkənt] (n.) 申請人，求職者",
+            "start": "[stɑːrt] (v.) 開始",
+            "monday": "['mʌndeɪ] (n.) 週一",
+            "any": "['eni] (det.) 任何",
+            "changes": "['tʃeɪndʒɪz] (n.) 變更，改變 (複數)",
+            "address": "[ə'dres] (n.) 地址",
+            "should": "[ʃʊd] (aux.) 應該",
+            "be": "[biː] (v.) 是，被...",
+            "reported": "[rɪ'pɔːrtɪd] (v.) 被回報",
+            "to": "[tuː] (prep.) 到，朝向",
+            "employees": "[ɪm'plɔɪiːz] (n.) 員工 (複數)",
+            "placed": "[pleɪst] (v.) 被安置，放置",
+            "on": "[ɑːn] (prep.) 在...之上，進行中",
+            "three-month": "['θriː'mʌnθ] (adj.) 三個月的",
+            "period": "['pɪriəd] (n.) 期間，時期",
+            "after": "['æftər] (prep.) 在...之後",
+            "long": "[lɔːŋ] (adj.) 漫長的",
+            "negotiations": "[nɪˌɡoʊʃi'eɪʃnz] (n.) 談判 (複數)",
+            "they": "[ðeɪ] (pron.) 他們",
+            "finally": "['faɪnəli] (adv.) 終於，最後",
+            "reached": "[riːtʃt] (v.) 達成，到達 (過去式)",
+            "both": "[boʊθ] (det.) 雙方的，兩者的",
+            "parties": "['pɑːrtiz] (n.) 締約方，派對 (複數)",
+            "ready": "['redi] (adj.) 準備好的",
+            "sign": "[saɪn] (v.) 簽名，簽署",
+            "contract": "['kɑːntrækt] (n.) 合約，契約",
+            "tomorrow": "[tə'mɑːroʊ] (adv.) 明天",
+            "morning": "['mɔːrnɪŋ] (n.) 早上",
+            "representative": "[ˌreprɪ'zentətɪv] (n.) 代表，代理人",
+            "will": "[wɪl] (aux.) 將要",
+            "terms": "[tɜːrmz] (n.) 條款，條件 (複數)",
+            "sale": "[seɪl] (n.) 銷售，拍賣",
+            "includes": "[ɪn'kluːdz] (v.) 包含 (單數動詞)",
+            "strict": "[strɪkt] (adj.) 嚴格的",
+            "confidentiality": "[ˌkɑːnfɪˌdenʃi'æləti] (n.) 保密，機密性",
+            "legal": "['liːɡl] (adj.) 法律上的，合法的",
+            "complete": "[kəm'pliːt] (v.) 完成",
+            "project": "['prɑːdʒekt] (n.) 專案，計劃",
+            "time": "[taɪm] (n.) 時間，按時",
+            "two": "[tuː] (num.) 二，兩個",
+            "nations": "['neɪʃnz] (n.) 國家 (複數)",
+            "signed": "[saɪnd] (v.) 簽署了 (過去式)",
+            "trade": "[treɪd] (n.) 貿易，商業",
+            "yesterday": "['jestərdeɪ] (adv.) 昨天",
+            "without": "[wɪ'ðaʊt] (prep.) 沒有，無",
+            "proper": "['prɑːpər] (adj.) 妥當的，適當的",
+            "signature": "['sɪɡnətʃər] (n.) 簽名",
+            "document": "['dɑːkjumənt] (n.) 文件",
+            "decided": "[dɪ'saɪdɪd] (v.) 決定了 (過去式)",
+            "another": "[ə'nʌðər] (adj.) 另一個，再...",
+            "years": "[jɪrz] (n.) 年 (複數)",
+            "conclude": "[kən'kluːd] (v.) 締結，結束",
+            "sides": "[saɪdz] (n.) 邊，方 (複數)",
+            "had": "[hæd] (v.) 必須 (have 過去式)",
+            "compromise": "['kɑːmprəmaɪz] (v.) 讓步，妥協",
+            "supplier": "[sə'plaɪər] (n.) 供應商",
+            "delivering": "[dɪ'lɪvərɪŋ] (v.) 遞送，交貨",
+            "late": "[leɪt] (adj.) 遲到的，晚的",
+            "brand": "[brænd] (n.) 品牌",
+            "retailer": "['riːteɪlər] (n.) 零售商",
+            "held": "[held] (v.) 召開，舉辦 (hold 過去式)",
+            "meeting": "['miːtɪŋ] (n.) 會議",
+            "pending": "['pendɪŋ] (adj.) 未決的，懸而未決的",
+            "issues": "['ɪʃuːz] (n.) 問題，爭議 (複數)",
+            "denied": "[dɪ'naɪd] (v.) 否認 (過去式)",
+            "failure": "['feɪljər] (n.) 故障，失敗",
+            "severe": "[sɪ'vɪr] (adj.) 嚴厲的，嚴重的",
+            "imposed": "[ɪm'poʊzd] (v.) 被強加，處以 (過去式)",
+            "breaking": "['breɪkɪŋ] (v.) 違反，打破",
+            "rules": "[ruːlz] (n.) 規則 (複數)",
+            "preparing": "[prɪ'perɪŋ] (v.) 正在準備",
+            "rough": "[rʌf] (adj.) 粗略的，粗糙的",
+            "no": "[noʊ] (det.) 沒有，無",
+            "made": "[meɪd] (v.) 被做出 (make 過去式)",
+            "executive": "[ɪɡ'zekjətɪv] (adj.) 執行的，決策的",
+            "team": "[tiːm] (n.) 團隊",
+            "transaction": "[træn'zækʃn] (n.) 交易",
+            "need": "[niːd] (v.) 需要",
+            "instructions": "[ɪn'strʌkʃnz] (n.) 指示，說明 (複數)",
+            "payment": "['peɪmənt] (n.) 付款",
+            "methods": "['meðədz] (n.) 方式，方法 (複數)",
+            "dispute": "[dɪ'spjuːt] (n.) 糾紛，爭議",
+            "submitted": "[səb'mɪtɪd] (v.) 提交，送交 (過去式)",
+            "independent": "[ˌɪndɪ'pendənt] (adj.) 獨立的",
+            "resolution": "[ˌrezə'luːʃn] (n.) 解決",
+            "reserved": "[rɪ'zɜːrvd] (v.) 保留了 (過去式)",
+            "right": "[raɪt] (n.) 權利",
+            "days'": "[deɪz] (adj.) 天數的",
+            "notice": "['noʊtɪs] (n.) 通知"
+        };
+
+        let currentUser = null;
+        let currentFilter = 'all';
+        let userProgress = {}; // 存放當前用戶的清楚(clear)/模糊(blurred)記錄
+
+        // ----------------- Authentication 權限邏輯 -----------------
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+                document.getElementById('user-panel').classList.remove('hidden');
+                document.getElementById('user-email').innerText = `帳號：${user.email}`;
+                loadProgressAndRender();
+            } else {
+                currentUser = null;
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('app-content').classList.add('hidden');
+                document.getElementById('user-panel').classList.add('hidden');
+            }
         });
 
-        loadMoreBlock.classList.remove('hidden');
-        renderVocabulary();
-      }).catch(err => console.error("加載失敗:", err));
-    }
-
-    loadMoreBtn.addEventListener('click', () => { fetchGlobalVocab(); });
-
-    function updateCloudStatus(wordId, newStatus) {
-      if (!currentUser) return;
-      userProgress[wordId] = newStatus;
-      renderVocabulary();
-      updateCounts();
-
-      db.collection('users').doc(currentUser.uid).collection('progress').doc(wordId).set({
-        status: newStatus
-      }, { merge: true }).catch(err => console.error(err));
-    }
-
-    // ==========================================
-    // 🎨 動態網頁渲染 - v7.2 安全防禦不當機版
-    // ==========================================
-    function renderVocabulary() {
-      const container = document.getElementById('vocabulary-container');
-      container.innerHTML = '';
-
-      loadedVocabulary.forEach((item, index) => {
-        const status = userProgress[item.id] || 'fuzzy';
-
-        if (currentFilter === 'fuzzy' && status !== 'fuzzy') return;
-        if (currentFilter === 'clear' && status !== 'clear') return;
-
-        const borderClass = status === 'clear' ? 'border-green-500 shadow-green-50' : 'border-yellow-400 shadow-yellow-50';
-        const bgBadge = status === 'clear' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-
-        // 🔒【v7.2 安全防禦關鍵】如果雲端資料缺少例句，給予保底空字串，100% 阻止 split 當機！
-        const rawSentence = item.sentence || "Please click the word above to study.";
-        const rawSentenceTranslation = item.sentenceTranslation || "請點擊上方單字進行學習。";
-
-        // 智慧拆解例句
-        const sentenceWords = rawSentence.split(' ');
-        const wrappedSentence = sentenceWords.map(word => {
-          let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"“”]/g, "").toLowerCase();
-          if (dynamicMiniDict[cleanWord] || (item.word && cleanWord === item.word.toLowerCase())) {
-            return `<span class="clickable-word" onclick="toggleInlineTranslation(event, '${cleanWord}', '${item.id}_${index}')">${word}</span>`;
-          }
-          return word;
-        }).join(' ');
-
-        container.innerHTML += `
-          <div class="word-card bg-white rounded-2xl p-6 border-l-8 ${borderClass} shadow-md relative flex flex-col justify-between">
-            <div>
-              <div class="flex justify-between items-center mb-4">
-                <span class="text-xs px-2.5 py-1 rounded-full font-bold tracking-wider ${bgBadge}">${status === 'clear' ? '🟢 清楚' : '🟡 模糊'}</span>
-                <div class="flex gap-2">
-                  <button onclick="updateCloudStatus('${item.id}', 'fuzzy')" class="p-1 px-2.5 text-xs font-semibold rounded-lg border border-yellow-300 hover:bg-yellow-50 text-yellow-600 transition">🟡 模糊</button>
-                  <button onclick="updateCloudStatus('${item.id}', 'clear')" class="p-1 px-2.5 text-xs font-semibold rounded-lg border border-green-300 hover:bg-green-50 text-green-600 transition">🟢 清楚</button>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 mb-2">
-                <h3 class="text-2xl font-bold text-slate-800">${item.word || 'Unknown'}</h3>
-                <span class="text-sm font-mono text-slate-400">${item.ipa || ''}</span>
-                <button onclick="playAudio('${item.word || ''}')" class="text-blue-500 hover:text-blue-700 transition p-1 text-lg"><i class="fa-solid fa-volume-high"></i></button>
-              </div>
-              <h4 class="text-lg font-semibold text-blue-600 mb-3">${item.translation || '未提供翻譯'}</h4>
-              <div class="text-sm text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4 leading-relaxed">
-                <span class="font-bold text-slate-700">🌱 記憶法：</span>${item.etymology || '多益常考核心單字'}
-              </div>
-              <div class="bg-blue-50/50 p-3.5 rounded-xl border border-blue-100 mb-4">
-                <div class="flex justify-between items-center mb-1">
-                  <span class="text-xs font-bold text-blue-800 tracking-wider">🎯 必考搭配詞</span>
-                  <button onclick="playAudio('${item.collocation || ''}')" class="text-blue-500 hover:text-blue-700 transition text-xs"><i class="fa-solid fa-volume-high"></i> 聽片語</button>
-                </div>
-                <div class="font-bold text-slate-800 text-sm">${item.collocation || 'N/A'}</div>
-                <div class="text-xs text-slate-500 mt-0.5">${item.collocationTranslation || ''}</div>
-              </div>
-            </div>
+        // 註冊
+        document.getElementById('btn-register').addEventListener('click', () => {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if (!email || !password) return alert('請輸入完整的信箱與密碼！');
             
-            <div class="border-t border-slate-100 pt-4 mt-2">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-xs font-bold text-slate-400 tracking-wider">📝 實戰商務例句</span>
-                <button onclick="playAudio('${rawSentence.replace(/'/g, "\\'")}')" class="text-blue-500 hover:text-blue-700 transition text-xs"><i class="fa-solid fa-volume-high"></i> 聽整句</button>
-              </div>
-              <div class="text-slate-700 text-sm leading-relaxed mb-1.5">${wrappedSentence}</div>
-              <div class="text-xs text-slate-500 font-medium">${rawSentenceTranslation}</div>
-              
-              <div id="inline-panel-${item.id}_${index}" class="inline-translation-panel mt-3 p-3 bg-slate-900 text-white rounded-xl text-xs border border-slate-800 shadow-inner">
-                <div class="flex justify-between items-center mb-1 border-b border-slate-800 pb-1">
-                  <span id="inline-word-${item.id}_${index}" class="font-bold text-yellow-400 text-sm uppercase"></span>
-                  <span id="inline-ipa-${item.id}_${index}" class="text-slate-400 font-mono"></span>
-                </div>
-                <div id="inline-trans-${item.id}_${index}" class="text-slate-200 font-medium mt-1 leading-relaxed"></div>
-              </div>
-            </div>
-          </div>`;
-      });
-      updateCounts();
-    }
-        // 智慧拆解例句：點擊時直接調用「就地切換面板」函數 toggleInlineTranslation
-        const sentenceWords = item.sentence.split(' ');
-        const wrappedSentence = sentenceWords.map(word => {
-          let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"區域“”]/g, "").toLowerCase();
-          if (dynamicMiniDict[cleanWord] || cleanWord === item.word.toLowerCase()) {
-            return `<span class="clickable-word" onclick="toggleInlineTranslation(event, '${cleanWord}', '${item.id}_${index}')">${word}</span>`;
-          }
-          return word;
-        }).join(' ');
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => alert('註冊成功！'))
+                .catch(err => alert('註冊失敗：' + err.message));
+        });
 
-        container.innerHTML += `
-          <div class="word-card bg-white rounded-2xl p-6 border-l-8 ${borderClass} shadow-md relative flex flex-col justify-between">
-            <div>
-              <div class="flex justify-between items-center mb-4">
-                <span class="text-xs px-2.5 py-1 rounded-full font-bold tracking-wider ${bgBadge}">${status === 'clear' ? '🟢 清楚' : '🟡 模糊'}</span>
-                <div class="flex gap-2">
-                  <button onclick="updateCloudStatus('${item.id}', 'fuzzy')" class="p-1 px-2.5 text-xs font-semibold rounded-lg border border-yellow-300 hover:bg-yellow-50 text-yellow-600 transition">🟡 模糊</button>
-                  <button onclick="updateCloudStatus('${item.id}', 'clear')" class="p-1 px-2.5 text-xs font-semibold rounded-lg border border-green-300 hover:bg-green-50 text-green-600 transition">🟢 清楚</button>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 mb-2">
-                <h3 class="text-2xl font-bold text-slate-800">${item.word}</h3>
-                <span class="text-sm font-mono text-slate-400">${item.ipa}</span>
-                <button onclick="playAudio('${item.word}')" class="text-blue-500 hover:text-blue-700 transition p-1 text-lg"><i class="fa-solid fa-volume-high"></i></button>
-              </div>
-              <h4 class="text-lg font-semibold text-blue-600 mb-3">${item.translation}</h4>
-              <div class="text-sm text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4 leading-relaxed">
-                <span class="font-bold text-slate-700">🌱 記憶法：</span>${item.etymology || '多益常考核心單字'}
-              </div>
-              <div class="bg-blue-50/50 p-3.5 rounded-xl border border-blue-100 mb-4">
-                <div class="flex justify-between items-center mb-1">
-                  <span class="text-xs font-bold text-blue-800 tracking-wider">🎯 必考搭配詞</span>
-                  <button onclick="playAudio('${item.collocation}')" class="text-blue-500 hover:text-blue-700 transition text-xs"><i class="fa-solid fa-volume-high"></i> 聽片語</button>
-                </div>
-                <div class="font-bold text-slate-800 text-sm">${item.collocation}</div>
-                <div class="text-xs text-slate-500 mt-0.5">${item.collocationTranslation}</div>
-              </div>
-            </div>
+        // 登入
+        document.getElementById('btn-login').addEventListener('click', () => {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if (!email || !password) return alert('請輸入完整的信箱與密碼！');
+
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(err => alert('登入失敗：' + err.message));
+        });
+
+        // 登出
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                userProgress = {};
+                document.getElementById('vocab-container').innerHTML = '';
+            });
+        });
+
+        // ----------------- 雲端資料加載與雙向即時渲染 -----------------
+        function loadProgressAndRender() {
+            if (!currentUser) return;
             
-            <div class="border-t border-slate-100 pt-4 mt-2">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-xs font-bold text-slate-400 tracking-wider">📝 實戰商務例句</span>
-                <button onclick="playAudio('${item.sentence.replace(/'/g, "\\'")}')" class="text-blue-500 hover:text-blue-700 transition text-xs"><i class="fa-solid fa-volume-high"></i> 聽整句</button>
-              </div>
-              <div class="text-slate-700 text-sm leading-relaxed mb-1.5">${wrappedSentence}</div>
-              <div class="text-xs text-slate-500 font-medium">${item.sentenceTranslation}</div>
-              
-              <div id="inline-panel-${item.id}_${index}" class="inline-translation-panel mt-3 p-3 bg-slate-900 text-white rounded-xl text-xs border border-slate-800 shadow-inner">
-                <div class="flex justify-between items-center mb-1 border-b border-slate-800 pb-1">
-                  <span id="inline-word-${item.id}_${index}" class="font-bold text-yellow-400 text-sm uppercase"></span>
-                  <span id="inline-ipa-${item.id}_${index}" class="text-slate-400 font-mono"></span>
-                </div>
-                <div id="inline-trans-${item.id}_${index}" class="text-slate-200 font-medium mt-1 leading-relaxed"></div>
-              </div>
-            </div>
-          </div>`;
-      });
-      updateCounts();
-    }
-
-    function updateCounts() {
-      const counts = { all: loadedVocabulary.length, fuzzy: 0, clear: 0 };
-      loadedVocabulary.forEach(item => {
-        const status = userProgress[item.id] || 'fuzzy';
-        counts[status]++;
-      });
-      document.getElementById('count-all').innerText = counts.all;
-      document.getElementById('count-fuzzy').innerText = counts.fuzzy;
-      document.getElementById('count-clear').innerText = counts.clear;
-    }
-
-    function filterWords(type) {
-      currentFilter = type;
-      ['btn-all', 'btn-fuzzy', 'btn-clear'].forEach(id => { document.getElementById(id).className = "px-5 py-2.5 rounded-xl font-semibold border transition"; });
-      const activeBtn = document.getElementById(`btn-${type}`);
-      if (type === 'all') activeBtn.className = "px-5 py-2.5 rounded-xl font-semibold bg-blue-600 text-white shadow-md transition";
-      else if (type === 'fuzzy') activeBtn.className = "px-5 py-2.5 rounded-xl font-semibold bg-yellow-400 text-slate-900 shadow-md transition";
-      else activeBtn.className = "px-5 py-2.5 rounded-xl font-semibold bg-green-500 text-white shadow-md transition";
-      renderVocabulary();
-    }
-
-    // ==========================================
-    // 🔊 四國口音智慧輪播發音模組
-    // ==========================================
-    function playAudio(text) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        const voices = window.speechSynthesis.getVoices();
-        const toeicVoices = {
-          us: ["Ava (Enhanced)", "Ava", "Google US English", "Samantha"],
-          gb: ["Serena (Enhanced)", "Serena", "Daniel"],
-          au: ["Karen (Enhanced)", "Karen"],
-          ca: ["Moira (Enhanced)", "Moira"]
-        };
-        let selectedVoice = null;
-        const isLongText = text.trim().includes(" ");
-        if (isLongText) {
-          const countries = ["us", "gb", "au", "ca"];
-          const randomCountry = countries[Math.floor(Math.random() * countries.length)];
-          for (const name of toeicVoices[randomCountry]) {
-            selectedVoice = voices.find(v => v.name === name); if (selectedVoice) break;
-          }
+            // 從 Firestore 讀取使用者進度
+            db.collection('users').doc(currentUser.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        userProgress = doc.data().progress || {};
+                    } else {
+                        userProgress = {};
+                    }
+                    renderVocabulary();
+                })
+                .catch(err => {
+                    console.error("載入進度失敗，將使用本地預設狀態", err);
+                    renderVocabulary();
+                });
         }
-        if (!selectedVoice) {
-          for (const name of toeicVoices.us) { selectedVoice = voices.find(v => v.name === name); if (selectedVoice) break; }
+
+        // ----------------- 核心卡片渲染與字句拆解事件 -----------------
+        function renderVocabulary() {
+            const container = document.getElementById('vocab-container');
+            container.innerHTML = '';
+            
+            let filteredList = defaultVocabularyList.filter(item => {
+                const status = userProgress[item.id] || 'unmarked';
+                if (currentFilter === 'blurred') return status === 'blurred';
+                if (currentFilter === 'clear') return status === 'clear';
+                return true;
+            });
+
+            filteredList.forEach(item => {
+                const status = userProgress[item.id] || 'unmarked';
+                
+                // 決定卡片外觀
+                let cardBorderClass = 'border-slate-100';
+                if (status === 'clear') cardBorderClass = 'border-l-8 border-l-emerald-500 border-y-slate-100 border-r-slate-100';
+                if (status === 'blurred') cardBorderClass = 'border-l-8 border-l-amber-500 border-y-slate-100 border-r-slate-100';
+
+                // 拆解例句
+                const sentenceWords = item.sentence.split(' ');
+                const formattedSentenceHtml = sentenceWords.map(rawWord => {
+                    // 去除標點符號進行比對
+                    const cleanWord = rawWord.toLowerCase().replace(/[^a-zA-Z-]/g, '');
+                    if (miniDict[cleanWord]) {
+                        return `<span class="clickable-word" onclick="showPopover(event, '${cleanWord}')">${rawWord}</span>`;
+                    }
+                    return rawWord;
+                }).join(' ');
+
+                const cardHtml = `
+                    <div class="bg-white rounded-2xl p-6 border ${cardBorderClass} shadow-sm transition-all hover:shadow-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold">${item.category}</span>
+                            <div class="flex gap-2">
+                                <button onclick="updateCloudStatus('${item.id}', 'clear')" class="px-2.5 py-1 text-xs font-bold rounded-lg ${status === 'clear' ? 'bg-emerald-500 text-white' : 'bg-slate-100 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600'} transition-all">
+                                    🟢 清楚
+                                </button>
+                                <button onclick="updateCloudStatus('${item.id}', 'blurred')" class="px-2.5 py-1 text-xs font-bold rounded-lg ${status === 'blurred' ? 'bg-amber-500 text-white' : 'bg-slate-100 hover:bg-amber-50 text-slate-500 hover:text-amber-600'} transition-all">
+                                    🟡 模糊
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 mb-2">
+                            <h3 class="text-2xl font-black text-slate-900 tracking-tight">${item.word}</h3>
+                            <span class="text-slate-400 font-mono text-sm">${item.ipa}</span>
+                            <button onclick="playAudio('${item.word}', true)" class="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-volume-high text-xs"></i>
+                            </button>
+                        </div>
+
+                        <p class="text-base font-bold text-slate-700 mb-4">${item.meaning}</p>
+                        
+                        <div class="bg-amber-50/50 border border-amber-100/50 rounded-xl p-3 mb-4">
+                            <p class="text-xs text-amber-800 font-medium leading-relaxed">
+                                <i class="fa-solid fa-lightbulb text-amber-500 mr-1.5"></i><strong>字根記憶：</strong>${item.tip}
+                            </p>
+                        </div>
+
+                        <div class="bg-blue-50/40 border border-blue-100/30 rounded-xl p-3.5 mb-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">多益精選搭配詞</span>
+                                <button onclick="playAudio('${item.col}', false)" class="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700 flex items-center justify-center transition-all">
+                                    <i class="fa-solid fa-volume-high text-[10px]"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm font-black text-blue-900">${item.col}</p>
+                            <p class="text-xs text-slate-500 font-medium mt-0.5">${item.colMean}</p>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">實戰商務例句</span>
+                                <button onclick="playAudio('${item.sentence.replace(/'/g, "\\'")}', false)" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all">
+                                    <i class="fa-solid fa-volume-high text-[11px]"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm text-slate-800 font-semibold leading-relaxed mb-1">${formattedSentenceHtml}</p>
+                            <p class="text-xs text-slate-500 font-medium">${item.sentenceMean}</p>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
         }
-        if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('en-US'));
-        if (selectedVoice) { utterance.voice = selectedVoice; utterance.lang = selectedVoice.lang; }
-        utterance.rate = isLongText ? 0.88 : 0.80;
-        window.speechSynthesis.speak(utterance);
-      }
-    }
 
-    // ==========================================
-    // 💬 v7.1 終極解決：就地嵌入式面板切換邏輯
-    // ==========================================
-    function toggleInlineTranslation(event, word, elementId) {
-      if (event) { event.stopPropagation(); event.preventDefault(); }
-      
-      const panel = document.getElementById(`inline-panel-${elementId}`);
-      const wordTitle = document.getElementById(`inline-word-${elementId}`);
-      const ipaSpan = document.getElementById(`inline-ipa-${elementId}`);
-      const transDiv = document.getElementById(`inline-trans-${elementId}`);
-      
-      // 1. 如果點擊的單字面板目前是開著的，就將其收合關閉
-      if (panel.style.display === 'block') {
-        panel.style.display = 'none';
-        return;
-      }
-      
-      // 先把當前單字卡裡可能開著的其他面板全部暗中關閉，保持畫面整潔
-      const cardPanels = targetContainer = event.target.closest('.border-t').querySelectorAll('.inline-translation-panel');
-      cardPanels.forEach(p => p.style.display = 'none');
+        // ----------------- 即時狀態同步雲端 + 千分之一秒本機渲染 -----------------
+        function updateCloudStatus(vocabId, status) {
+            if (!currentUser) return;
 
-      // 2. 獲取字典中英對照資訊
-      let info = dynamicMiniDict[word];
-      if (!info) info = `[TOEIC] 多益核心衍伸字彙。`;
+            // 1. 先同步更新本地的變數狀態（體驗快感）
+            userProgress[vocabId] = status;
+            
+            // 2. 原地立即重新渲染卡片，不需要重新整理網頁！
+            renderVocabulary();
 
-      const parts = info.split(') ');
-      const ipaText = parts[0].includes('[') ? parts[0] + ')' : '';
-      const translationText = parts[1] || parts[0];
+            // 3. 同步送往 Firebase 備份（非同步靜默執行）
+            db.collection('users').doc(currentUser.uid).set({
+                progress: userProgress
+            }, { merge: true })
+            .then(() => {
+                console.log(`[雲端同步成功] 單字:${vocabId} 狀態已變更為: ${status}`);
+            })
+            .catch(err => {
+                console.error("雲端同步失敗", err);
+            });
+        }
 
-      // 3. 填入資訊並就地展開
-      wordTitle.innerText = word;
-      ipaSpan.innerText = ipaText;
-      transDiv.innerText = translationText;
-      panel.style.display = 'block';
+        // 篩選器切換
+        function filterVocab(type) {
+            currentFilter = type;
+            
+            // 更新篩選按鈕樣式
+            const btnAll = document.getElementById('btn-filter-all');
+            const btnBlurred = document.getElementById('btn-filter-blurred');
+            const btnClear = document.getElementById('btn-filter-clear');
 
-      // 4. 強制同步高階美音朗讀
-      playAudio(word);
-    }
-  </script>
+            [btnAll, btnBlurred, btnClear].forEach(btn => {
+                btn.className = "px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl transition-all";
+            });
+
+            if (type === 'all') {
+                btnAll.className = "px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 text-sm font-bold rounded-xl transition-all";
+            } else if (type === 'blurred') {
+                btnBlurred.className = "px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-bold rounded-xl transition-all";
+            } else if (type === 'clear') {
+                btnClear.className = "px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold rounded-xl transition-all";
+            }
+
+            renderVocabulary();
+        }
+
+        // ----------------- 智慧多國語音模組 -----------------
+        function playAudio(text, isMainWord = false) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel(); // 停止目前播放的所有語音
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+
+            if (isMainWord) {
+                // 主單字：指定頂級清晰的美式女音 (Ava 或 Samantha)
+                const mainVoice = voices.find(v => 
+                    v.lang.startsWith('en-US') && 
+                    (v.name.includes('Ava') || v.name.includes('Samantha'))
+                ) || voices.find(v => v.lang.startsWith('en-US'));
+                if (mainVoice) utterance.voice = mainVoice;
+                utterance.rate = 0.85;
+            } else {
+                // 搭配詞與例句：多益聽力擬真隨機四國考官輪播 (美、英、澳、加)
+                const targetLangs = ['en-US', 'en-GB', 'en-AU', 'en-CA'];
+                const accentVoices = voices.filter(v => 
+                    targetLangs.some(lang => v.lang.startsWith(lang)) &&
+                    !['Fred', 'Albert', 'Boing', 'Whisper'].some(bad => v.name.includes(bad))
+                );
+
+                if (accentVoices.length > 0) {
+                    const randomVoice = accentVoices[Math.floor(Math.random() * accentVoices.length)];
+                    utterance.voice = randomVoice;
+                    console.log(`[多益聽力模擬] 當前播放口音講師：${randomVoice.name} (${randomVoice.lang})`);
+                }
+                utterance.rate = 0.8; // 語速微慢，最適合背誦
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // 確保語音庫在瀏覽器準備好時完全加載
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = () => {};
+        }
+
+        // ----------------- 智慧氣泡翻譯定位 (不當機版) -----------------
+        const popover = document.getElementById('popover');
+
+        function showPopover(event, word) {
+            // 阻止點擊事件向外擴散，防氣泡剛開就被 window click 事件秒殺
+            event.stopPropagation();
+            event.preventDefault();
+
+            const dictData = miniDict[word];
+            if (!dictData) return;
+
+            // 格式化解析字典字串 "['ipa'] 說明"
+            const ipaMatch = dictData.match(/^\[.*?\]/);
+            const ipaStr = ipaMatch ? ipaMatch[0] : '';
+            const meaningStr = dictData.replace(ipaStr, '').trim();
+
+            document.getElementById('pop-word').innerText = word.charAt(0).toUpperCase() + word.slice(1);
+            document.getElementById('pop-ipa').innerText = ipaStr;
+            document.getElementById('pop-meaning').innerText = meaningStr;
+
+            // 顯示氣泡
+            popover.style.display = 'block';
+
+            // 智慧定位氣泡 (置於點擊字體正上方)
+            const target = event.currentTarget;
+            const rect = target.getBoundingClientRect();
+            const popoverRect = popover.getBoundingClientRect();
+
+            // 相對於網頁 document 的頂部與左側絕對位置
+            const topPos = rect.top + window.scrollY - popoverRect.height - 10;
+            const leftPos = rect.left + window.scrollX + (rect.width / 2) - (popoverRect.width / 2);
+
+            popover.style.top = `${topPos}px`;
+            popover.style.left = `${leftPos}px`;
+
+            // 同步呼叫單音發音
+            playAudio(word, true);
+        }
+
+        // 點擊網頁任意其他地方，關閉翻譯氣泡
+        document.addEventListener('click', () => {
+            popover.style.display = 'none';
+        });
+    </script>
 </body>
 </html>
