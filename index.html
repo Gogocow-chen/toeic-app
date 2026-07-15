@@ -586,30 +586,67 @@
     // ==========================================
     // 🔊 智慧語音發音模組 - 智慧優化美音版 (TTS Engine)
     // ==========================================
+    // ==========================================
+    // 🔊 智慧語音發音模組 - Mac/iOS 深度優化完美美音版
+    // ==========================================
     function playAudio(text) {
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); 
+        window.speechSynthesis.cancel(); // 立即停止當前所有播放，避免語音重疊
         
         const utterance = new SpeechSynthesisUtterance(text);
         const voices = window.speechSynthesis.getVoices();
         
-        // 優先過濾高品質美語語音 (Mac OS: Samantha/Ava | Google Chrome: Google US English)
-        let selectedVoice = voices.find(voice => 
-          voice.lang.includes('en-US') && 
-          (voice.name.includes('Google') || voice.name.includes('Samantha') || voice.name.includes('Ava'))
-        );
+        // 1. 定義我們期望的高品質美音名稱（優先順序）
+        const premiumUSNames = [
+          "Samantha (Enhanced)", 
+          "Samantha", 
+          "Ava (Enhanced)", 
+          "Ava", 
+          "Google US English", 
+          "Microsoft Zira"
+        ];
         
-        if (!selectedVoice) {
-          selectedVoice = voices.find(voice => voice.lang.includes('en-US'));
+        // 2. 排除 Mac 系統中那些聽起來像機器人或搞笑的低品質語音
+        const activeVoices = voices.filter(voice => {
+          const name = voice.name.toLowerCase();
+          return !name.includes('keynote') && 
+                 !name.includes('bad') && 
+                 !name.includes('bell') && 
+                 !name.includes('cell') && 
+                 !name.includes('organ') && 
+                 !name.includes('freaky') &&
+                 !name.includes('jester') &&
+                 !name.includes('whisper') &&
+                 !name.includes('boing');
+        });
+        
+        let selectedVoice = null;
+        
+        // 3. 嘗試在乾淨的語音清單中，尋找我們指定的優質美音
+        for (const targetName of premiumUSNames) {
+          selectedVoice = activeVoices.find(voice => voice.name === targetName);
+          if (selectedVoice) break;
         }
         
+        // 4. 如果找不到上述名單，則退而求其次尋找任何包含 "en-US"（美式英語）的語音
+        if (!selectedVoice) {
+          selectedVoice = activeVoices.find(voice => voice.lang.includes('en-US'));
+        }
+        
+        // 5. 如果還是找不到，至少找任何包含 "en" 的英文語音
+        if (!selectedVoice) {
+          selectedVoice = activeVoices.find(voice => voice.lang.startsWith('en'));
+        }
+        
+        // 6. 成功鎖定語音後套用
         if (selectedVoice) {
           utterance.voice = selectedVoice;
+          console.log("目前啟用的優質語音庫：", selectedVoice.name);
         }
         
         utterance.lang = 'en-US';
-        utterance.rate = 0.82;   // 清晰朗讀與跟讀語速
-        utterance.pitch = 1.0;
+        utterance.rate = 0.80;   // 最佳跟讀與聆聽語速（自然流暢）
+        utterance.pitch = 1.0;   // 標準音高
         
         window.speechSynthesis.speak(utterance);
       } else {
@@ -617,10 +654,14 @@
       }
     }
 
+    // 解決 Mac 瀏覽器首次加載時，語音清單尚未準備就緒的問題
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = function() {
-        window.speechSynthesis.getVoices();
-      };
+      window.speechSynthesis.getVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          window.speechSynthesis.getVoices();
+        };
+      }
     }
 
     // ==========================================
