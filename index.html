@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TOEIC 700+ 雲端智慧單字庫 v6.5</title>
+  <title>TOEIC 700+ 雲端智慧單字庫 v6.6</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -19,7 +19,7 @@
     }
     .clickable-word {
       cursor: pointer;
-      border-bottom: 2px dashed #3b82f6; /* 加強可點擊下底線視覺 */
+      border-bottom: 2px dashed #3b82f6;
       display: inline-block;
       transition: all 0.2s;
       padding: 0 2px;
@@ -31,7 +31,7 @@
     }
     .popover {
       position: absolute;
-      z-index: 100; /* 確保在最上層 */
+      z-index: 100;
       max-width: 280px;
       display: none;
     }
@@ -43,7 +43,7 @@
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-3">
         <i class="fa-solid fa-graduation-cap text-yellow-400 text-2xl"></i>
-        <h1 class="text-xl font-bold tracking-wide">TOEIC 700+ 雲端智慧單字庫 <span class="text-xs bg-blue-600 px-2 py-0.5 rounded-full">v6.5</span></h1>
+        <h1 class="text-xl font-bold tracking-wide">TOEIC 700+ 雲端智慧單字庫 <span class="text-xs bg-blue-600 px-2 py-0.5 rounded-full">v6.6</span></h1>
       </div>
       <div id="auth-section" class="flex items-center gap-4 text-sm">
         <span id="user-display" class="hidden text-slate-300"></span>
@@ -82,14 +82,14 @@
       </div>
       <div class="text-sm text-slate-500 bg-slate-100 px-4 py-2 rounded-xl flex items-center gap-2">
         <i class="fa-solid fa-circle-info text-blue-500"></i>
-        <span>已修復例句點擊事件！直接點擊虛線單字，可同步發音與顯示中文翻譯！</span>
+        <span>已完成 v6.6 跨瀏覽器相容性重構，解決 Mac 點擊無反應問題。</span>
       </div>
     </div>
 
     <div class="mb-12">
       <div class="flex items-center gap-3 mb-6 border-b border-slate-200 pb-3">
         <span class="text-3xl">👥</span>
-        <h2 class="text-2xl font-bold text-slate-900">情情一：人事與招募 (Recruitment & Personnel)</h2>
+        <h2 class="text-2xl font-bold text-slate-900">情境一：人事與招募 (Recruitment & Personnel)</h2>
       </div>
       <div id="recruitment-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
@@ -481,7 +481,7 @@
           }
 
           if (matchedKey) {
-            // 使用 event 參數，並傳遞單字字串
+            // 這裡修正：顯式將 event 作為第一個引數傳遞給 showPopover！
             return `<span class="clickable-word text-blue-600 font-medium" onclick="showPopover(event, '${matchedKey}')">${word}</span>`;
           }
           return word;
@@ -637,22 +637,33 @@
     }
 
     // ==========================================
-    // 💬 點擊單字彈窗與翻譯 (核心修復：阻止冒泡事件)
+    // 💬 點擊單字彈窗與翻譯 (核心修復：使用相容性事件抓取與冒泡阻止)
     // ==========================================
     function showPopover(event, word) {
-      // 關鍵修復：阻止事件向上冒泡，防止彈窗剛顯示就被 document click 關閉！
+      // 1. 強力防禦阻斷事件
       if (event) {
-        event.stopPropagation();
-        event.preventDefault();
+        if (typeof event.stopPropagation === 'function') {
+          event.stopPropagation();
+        }
+        if (typeof event.preventDefault === 'function') {
+          event.preventDefault();
+        }
+      } else {
+        // 相容舊版或極少數沒傳入 event 的環境
+        event = window.event;
       }
 
       const info = miniDict[word];
       if (!info) {
-        console.log("查無此單字:", word);
+        console.warn("查無此單字:", word);
         return;
       }
 
-      const rect = event.currentTarget.getBoundingClientRect();
+      // 2. 獲取相對於目前點選目標的網頁坐標
+      const targetElement = event.currentTarget || event.target;
+      if (!targetElement) return;
+
+      const rect = targetElement.getBoundingClientRect();
       const parts = info.split(') ');
       const ipaAndPart = parts[0] + ')';
       const trans = parts[1] || "";
@@ -665,16 +676,16 @@
 
       popoverBubble.style.display = 'block';
       
-      // 計算相對於頁面的絕對位置，避免被卡在容器內
+      // 3. 利用相對坐標，動態、完美地將氣泡定位到目標單字的正上方（並保留小箭頭對齊）
       popoverBubble.style.top = `${window.scrollY + rect.top - popoverBubble.offsetHeight - 10}px`;
       popoverBubble.style.left = `${window.scrollX + rect.left + (rect.width / 2) - (popoverBubble.offsetWidth / 2)}px`;
 
-      // 同步朗讀單字
+      // 4. 標準語音朗讀
       playAudio(word);
     }
 
     function playPopoverAudio(event) {
-      if (event) {
+      if (event && typeof event.stopPropagation === 'function') {
         event.stopPropagation();
       }
       if (popoverAudioWord) {
@@ -684,7 +695,6 @@
 
     // 點擊網頁任何其他地方關閉彈窗
     document.addEventListener('click', (e) => {
-      // 只有當點擊的目標不是彈窗內部，也不是可點擊單字時才隱藏
       if (!popoverBubble.contains(e.target) && !e.target.classList.contains('clickable-word')) {
         popoverBubble.style.display = 'none';
       }
