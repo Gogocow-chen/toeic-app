@@ -430,16 +430,29 @@
         });
     }
 
+  // ==========================================
+    // 💾 雲端資料庫同步 + 本地即時視覺渲染 (v6.8)
+    // ==========================================
     function updateCloudStatus(wordId, newStatus) {
       if (!currentUser) return;
+      
+      // 1. 先讓本地端的狀態陣列記住新狀態
       userProgress[wordId] = newStatus;
+      
+      // 2. ⚡【關鍵修復】點擊瞬間不等待雲端回傳，立刻在本地網頁重畫卡片顏色與切換狀態！
+      renderVocabulary(); 
+      updateCounts();
+
+      // 3. 同步將紀錄安全地送上 Firebase 雲端備份
       db.collection('users').doc(currentUser.uid).collection('progress').doc(wordId).set({
         status: newStatus
       }, { merge: true })
       .then(() => {
-        updateCounts();
+        console.log(`單字 ${wordId} 已成功與 Firebase 雲端同步為 ${newStatus}`);
       })
-      .catch(err => console.error("雲端同步失敗：", err));
+      .catch(err => {
+        console.error("雲端同步失敗，但本地複習不受影響：", err);
+      });
     }
 
     // ==========================================
