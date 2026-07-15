@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOEIC 多益 700+ 雲端智慧單字庫 v6.8</title>
+    <title>TOEIC 多益 700+ 雲端智慧單字庫 v6.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -65,11 +65,21 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-bold text-slate-900 tracking-tight">TOEIC 目標 700+</h1>
-                    <p class="text-xs text-slate-500 font-medium">雲端雙向發音單字庫 v6.8</p>
+                    <p class="text-xs text-slate-500 font-medium">雲端雙向發音單字庫 v6.9</p>
                 </div>
             </div>
             
-            <div id="user-panel" class="hidden flex items-center gap-4">
+            <div id="user-panel" class="hidden flex flex-col sm:flex-row items-center gap-4">
+                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                    <label for="accent-select" class="text-xs font-bold text-slate-600"><i class="fa-solid fa-earth-americas mr-1"></i>口音選擇：</label>
+                    <select id="accent-select" class="text-xs bg-white border border-slate-300 rounded-lg p-1 font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="random">🔀 四國口音隨機輪播</option>
+                        <option value="en-US">🇺🇸 美式英語 (US)</option>
+                        <option value="en-GB">🇬🇧 英式英語 (GB)</option>
+                        <option value="en-AU">🇦🇺 澳式英語 (AU)</option>
+                        <option value="en-CA">🇨🇦 加式英語 (CA)</option>
+                    </select>
+                </div>
                 <span id="user-email" class="text-sm text-slate-600 font-medium"></span>
                 <button id="btn-logout" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold transition-colors">
                     登出 <i class="fa-solid fa-right-from-bracket ml-1"></i>
@@ -171,9 +181,9 @@
             { id: "v17", category: "合約與談判", word: "Renew", ipa: "[rɪˈnuː]", meaning: "續約，更新", tip: "re- (重新) + new (新)。讓舊合約重新煥發新生，即為續約。", col: "renew a lease", colMean: "續訂租約", sentence: "They decided to renew their contract for another two years.", sentenceMean: "他們決定將合約再續簽兩年。" },
             { id: "v18", category: "合約與談判", word: "Compromise", ipa: "[ˈkɑːmprəmaɪz]", meaning: "妥協，讓步", tip: "com- (共同) + promise (承諾)。雙方共同做出承諾並各退一步，達成和解。", col: "reach a compromise", colMean: "達成妥協", sentence: "To conclude the agreement, both sides had to compromise.", sentenceMean: "為達成協議，雙方都必須做出讓步。" },
             { id: "v19", category: "合約與談判", word: "Breach", ipa: "[briːtʃ]", meaning: "違約，違反 (n./v.)", tip: "與 break (打破) 同源。打破合約規定，即違約。", col: "breach of contract", colMean: "違約", sentence: "The supplier is in breach of contract for late delivery.", sentenceMean: "供應商因延遲交貨而構成違約。" },
-            { id: "v20", category: "合約與談判", word: "Exclusivity", ipa: "[ˌekskluːˈsɪvəti]", meaning: "獨家性，排他性", tip: "exclude (排除) 的名詞派生。將其他人排除在外，即專屬或獨家。", col: "exclusivity agreement", colMean: "獨家代理協定", sentence: "The brand is negotiating an exclusivity deal with the retailer.", sentenceMean: "該品牌正與該零售商商討一項獨家代理協定。" },
+            { id: "v20", category: "合約與談判", word: "Exclusivity", ipa: "[ˌekskluːˈsɪvəti]", meaning: "獨家性，排他性", tip: "exclude (排除) 的名詞派生。將其他人排除在外，即專屬 or 獨家。", col: "exclusivity agreement", colMean: "獨家代理協定", sentence: "The brand is negotiating an exclusivity deal with the retailer.", sentenceMean: "該品牌正與該零售商商討一項獨家代理協定。" },
             { id: "v21", category: "合約與談判", word: "Resolve", ipa: "[rɪˈzɑːlv]", meaning: "解決，決心", tip: "re- (加強) + solve (鬆開)。將複雜糾結的矛盾徹底鬆開，即解決紛爭。", col: "resolve a dispute", colMean: "解決糾紛", sentence: "They held a meeting to resolve the pending contract issues.", sentenceMean: "他們召開會議以解決未決的合約問題。" },
-            { id: "v22", category: "合約與談判", word: "Liability", ipa: "[ˌlaɪəˈbɪləti]", meaning: "法律責任，賠償責任", tip: "liable (應負責的) + -ity (名詞尾)。因違法或疏忽而必須承擔的賠償責任。", col: "accept liability", colMean: "承擔責任", sentence: "The company denied any liability for the system failure.", sentenceMean: "公司否認對系統故障承擔任何責任。" },
+            { id: "v22", category: "合約與談判", word: "Liability", ipa: "[ˌlaɪəˈbɪləti]", meaning: "法律責任，賠償責任", tip: "liable (應負責的) + -ity (名詞尾)。因違法或疏忽而必須承擔的賠償責任。", col: "accept liability", colMean: "承擔責任", sentence: "The company denied any liability for the system failure.", sentenceMean: "公司否認對系統故障承擔 any 責任。" },
             { id: "v23", category: "合約與談判", word: "Penalty", ipa: "[ˈpenəlti]", meaning: "罰款，處罰", tip: "pen- (懲罰)，如 penal code (刑法)。因違規或違約而受到的罰金懲處。", col: "pay a penalty", colMean: "支付罰款", sentence: "A severe penalty will be imposed for breaking the rules.", sentenceMean: "違反規定將被處以嚴厲罰款。" },
             { id: "v24", category: "合約與談判", word: "Draft", ipa: "[dræft]", meaning: "草稿，草擬", tip: "原意為拖、拉。拉出一個大概的框架輪廓，即草稿。", col: "draft a contract", colMean: "草擬合約", sentence: "The legal department is preparing a rough draft of the agreement.", sentenceMean: "法務部門正準備該協定的一份粗略草案。" },
             { id: "v25", category: "合約與談判", word: "Consent", ipa: "[kənˈsent]", meaning: "同意，贊同 (n./v.)", tip: "con- (共同) + sent (感覺，如 sense)。雙方的感覺完全在一起，即同意。", col: "written consent", colMean: "書面同意", sentence: "No changes can be made without the written consent of both parties.", sentenceMean: "未經雙方書面同意，不得做任何修改。" },
@@ -183,7 +193,7 @@
             { id: "v29", category: "合約與談判", word: "Terminate", ipa: "[ˈtɜːrmɪneɪt]", meaning: "終止，結束", tip: "termin- (界線、邊界)，如 terminal 終點站。使合約走到邊界，即終止合約。", col: "terminate a contract", colMean: "終止合約", sentence: "They reserved the right to terminate the agreement with 30 days' notice.", sentenceMean: "他們保留了提前 30 天通知終止協定的權利。" }
         ];
 
-        // ----------------- 智慧字典 (例句單字點擊庫) -----------------
+        // ----------------- 智慧字典 -----------------
         const miniDict = {
             "hiring": "['haɪərɪŋ] (adj.) 招聘的，僱用的",
             "manager": "['mænɪdʒər] (n.) 經理，負責人",
@@ -309,7 +319,7 @@
 
         let currentUser = null;
         let currentFilter = 'all';
-        let userProgress = {}; // 存放當前用戶的清楚(clear)/模糊(blurred)記錄
+        let userProgress = {}; 
 
         // ----------------- Authentication 權限邏輯 -----------------
         auth.onAuthStateChanged(user => {
@@ -357,11 +367,10 @@
             });
         });
 
-        // ----------------- 雲端資料加載與雙向即時渲染 -----------------
+        // ----------------- 雲端資料加載 -----------------
         function loadProgressAndRender() {
             if (!currentUser) return;
             
-            // 從 Firestore 讀取使用者進度
             db.collection('users').doc(currentUser.uid).get()
                 .then(doc => {
                     if (doc.exists) {
@@ -377,7 +386,7 @@
                 });
         }
 
-        // ----------------- 核心卡片渲染與字句拆解事件 -----------------
+        // ----------------- 核心卡片渲染 -----------------
         function renderVocabulary() {
             const container = document.getElementById('vocab-container');
             container.innerHTML = '';
@@ -392,7 +401,6 @@
             filteredList.forEach(item => {
                 const status = userProgress[item.id] || 'unmarked';
                 
-                // 決定卡片外觀
                 let cardBorderClass = 'border-slate-100';
                 if (status === 'clear') cardBorderClass = 'border-l-8 border-l-emerald-500 border-y-slate-100 border-r-slate-100';
                 if (status === 'blurred') cardBorderClass = 'border-l-8 border-l-amber-500 border-y-slate-100 border-r-slate-100';
@@ -400,7 +408,6 @@
                 // 拆解例句
                 const sentenceWords = item.sentence.split(' ');
                 const formattedSentenceHtml = sentenceWords.map(rawWord => {
-                    // 去除標點符號進行比對
                     const cleanWord = rawWord.toLowerCase().replace(/[^a-zA-Z-]/g, '');
                     if (miniDict[cleanWord]) {
                         return `<span class="clickable-word" onclick="showPopover(event, '${cleanWord}')">${rawWord}</span>`;
@@ -465,17 +472,13 @@
             });
         }
 
-        // ----------------- 即時狀態同步雲端 + 千分之一秒本機渲染 -----------------
+        // ----------------- 即時狀態同步雲端 -----------------
         function updateCloudStatus(vocabId, status) {
             if (!currentUser) return;
 
-            // 1. 先同步更新本地的變數狀態（體驗快感）
             userProgress[vocabId] = status;
-            
-            // 2. 原地立即重新渲染卡片，不需要重新整理網頁！
             renderVocabulary();
 
-            // 3. 同步送往 Firebase 備份（非同步靜默執行）
             db.collection('users').doc(currentUser.uid).set({
                 progress: userProgress
             }, { merge: true })
@@ -491,7 +494,6 @@
         function filterVocab(type) {
             currentFilter = type;
             
-            // 更新篩選按鈕樣式
             const btnAll = document.getElementById('btn-filter-all');
             const btnBlurred = document.getElementById('btn-filter-blurred');
             const btnClear = document.getElementById('btn-filter-clear');
@@ -511,36 +513,64 @@
             renderVocabulary();
         }
 
-        // ----------------- 智慧多國語音模組 -----------------
+        // ----------------- 🛠️ 升級版「全域口音同步」語音模組 -----------------
         function playAudio(text, isMainWord = false) {
             if (!window.speechSynthesis) return;
-            window.speechSynthesis.cancel(); // 停止目前播放的所有語音
+            window.speechSynthesis.cancel(); // 停止目前播放
 
             const utterance = new SpeechSynthesisUtterance(text);
             const voices = window.speechSynthesis.getVoices();
 
-            if (isMainWord) {
-                // 主單字：指定頂級清晰的美式女音 (Ava 或 Samantha)
-                const mainVoice = voices.find(v => 
-                    v.lang.startsWith('en-US') && 
-                    (v.name.includes('Ava') || v.name.includes('Samantha'))
-                ) || voices.find(v => v.lang.startsWith('en-US'));
-                if (mainVoice) utterance.voice = mainVoice;
-                utterance.rate = 0.85;
+            // 讀取當前使用者在畫面上選擇的口音設定
+            const accentSetting = document.getElementById('accent-select').value;
+
+            if (accentSetting === 'random') {
+                // 🔹 模式一：原本的隨機多益口音輪播 (英、美、澳、加)
+                if (isMainWord) {
+                    const mainVoice = voices.find(v => 
+                        v.lang.startsWith('en-US') && 
+                        (v.name.includes('Ava') || v.name.includes('Samantha'))
+                    ) || voices.find(v => v.lang.startsWith('en-US'));
+                    if (mainVoice) utterance.voice = mainVoice;
+                    utterance.rate = 0.85;
+                } else {
+                    const targetLangs = ['en-US', 'en-GB', 'en-AU', 'en-CA'];
+                    const accentVoices = voices.filter(v => 
+                        targetLangs.some(lang => v.lang.startsWith(lang)) &&
+                        !['Fred', 'Albert', 'Boing', 'Whisper'].some(bad => v.name.includes(bad))
+                    );
+
+                    if (accentVoices.length > 0) {
+                        const randomVoice = accentVoices[Math.floor(Math.random() * accentVoices.length)];
+                        utterance.voice = randomVoice;
+                        console.log(`[多益聽力模擬] 隨機指派講師：${randomVoice.name} (${randomVoice.lang})`);
+                    }
+                    utterance.rate = 0.8;
+                }
             } else {
-                // 搭配詞與例句：多益聽力擬真隨機四國考官輪播 (美、英、澳、加)
-                const targetLangs = ['en-US', 'en-GB', 'en-AU', 'en-CA'];
-                const accentVoices = voices.filter(v => 
-                    targetLangs.some(lang => v.lang.startsWith(lang)) &&
+                // 🔹 模式二：強制全螢幕同步單一口音 (US / GB / AU / CA)
+                // 在系統中搜尋符合該國家/地區編碼，且避開低音質的語音庫
+                const selectedVoices = voices.filter(v => 
+                    v.lang.startsWith(accentSetting) &&
                     !['Fred', 'Albert', 'Boing', 'Whisper'].some(bad => v.name.includes(bad))
                 );
 
-                if (accentVoices.length > 0) {
-                    const randomVoice = accentVoices[Math.floor(Math.random() * accentVoices.length)];
-                    utterance.voice = randomVoice;
-                    console.log(`[多益聽力模擬] 當前播放口音講師：${randomVoice.name} (${randomVoice.lang})`);
+                if (selectedVoices.length > 0) {
+                    // 優先尋找 Enhanced/Premium 或知名的高品質語音（例如 Ava、Serena、Karen、Linda 等）
+                    const premiumVoice = selectedVoices.find(v => 
+                        v.name.includes('Ava') || 
+                        v.name.includes('Samantha') || 
+                        v.name.includes('Serena') || 
+                        v.name.includes('Karen') || 
+                        v.name.includes('Linda') ||
+                        v.name.includes('Enhanced')
+                    ) || selectedVoices[0];
+                    
+                    utterance.voice = premiumVoice;
+                    console.log(`[全域口音同步] 強制使用指定講師：${premiumVoice.name} (${premiumVoice.lang})`);
                 }
-                utterance.rate = 0.8; // 語速微慢，最適合背誦
+                
+                utterance.rate = isMainWord ? 0.85 : 0.8;
             }
 
             window.speechSynthesis.speak(utterance);
@@ -551,18 +581,16 @@
             window.speechSynthesis.onvoiceschanged = () => {};
         }
 
-        // ----------------- 智慧氣泡翻譯定位 (不當機版) -----------------
+        // ----------------- 智慧氣泡翻譯定位 -----------------
         const popover = document.getElementById('popover');
 
         function showPopover(event, word) {
-            // 阻止點擊事件向外擴散，防氣泡剛開就被 window click 事件秒殺
             event.stopPropagation();
             event.preventDefault();
 
             const dictData = miniDict[word];
             if (!dictData) return;
 
-            // 格式化解析字典字串 "['ipa'] 說明"
             const ipaMatch = dictData.match(/^\[.*?\]/);
             const ipaStr = ipaMatch ? ipaMatch[0] : '';
             const meaningStr = dictData.replace(ipaStr, '').trim();
@@ -571,26 +599,22 @@
             document.getElementById('pop-ipa').innerText = ipaStr;
             document.getElementById('pop-meaning').innerText = meaningStr;
 
-            // 顯示氣泡
             popover.style.display = 'block';
 
-            // 智慧定位氣泡 (置於點擊字體正上方)
             const target = event.currentTarget;
             const rect = target.getBoundingClientRect();
             const popoverRect = popover.getBoundingClientRect();
 
-            // 相對於網頁 document 的頂部與左側絕對位置
             const topPos = rect.top + window.scrollY - popoverRect.height - 10;
             const leftPos = rect.left + window.scrollX + (rect.width / 2) - (popoverRect.width / 2);
 
             popover.style.top = `${topPos}px`;
             popover.style.left = `${leftPos}px`;
 
-            // 同步呼叫單音發音
+            // 同步呼叫單字發音 (會自動遵循下拉選單所選擇的口音！)
             playAudio(word, true);
         }
 
-        // 點擊網頁任意其他地方，關閉翻譯氣泡
         document.addEventListener('click', () => {
             popover.style.display = 'none';
         });
