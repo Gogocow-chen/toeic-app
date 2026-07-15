@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TOEIC 700+ 雲端大數據單字庫 v7.0</title>
+  <title>TOEIC 700+ 雲端大數據單字庫 v7.1</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -12,9 +12,25 @@
   <style>
     .word-card { transition: all 0.3s ease; }
     .word-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-    .clickable-word { cursor: pointer; border-bottom: 2px dashed #3b82f6; display: inline-block; transition: all 0.2s; padding: 0 2px; }
-    .clickable-word:hover { background-color: #dbeafe; color: #1d4ed8; border-radius: 4px; }
-    .popover { position: absolute; z-index: 100; max-width: 280px; display: none; }
+    /* 終極相容視覺：讓可點擊單字變成精美的互動標籤，在 Mac 上極易點選 */
+    .clickable-word { 
+      cursor: pointer; 
+      color: #2563eb;
+      font-weight: 500;
+      border-bottom: 2px dashed #3b82f6; 
+      display: inline-block; 
+      padding: 0 2px;
+      transition: all 0.2s;
+    }
+    .clickable-word:hover { 
+      background-color: #dbeafe; 
+      color: #1d4ed8; 
+      border-radius: 4px; 
+    }
+    /* 嵌入式即時翻譯面板：不再使用絕對定位，100% 解決 Mac 座標當機問題 */
+    .inline-translation-panel {
+      display: none;
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans">
@@ -23,7 +39,7 @@
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-3">
         <i class="fa-solid fa-database text-yellow-400 text-2xl"></i>
-        <h1 class="text-xl font-bold tracking-wide">TOEIC 700+ 雲端動態大數據單字庫 <span class="text-xs bg-green-600 px-2 py-0.5 rounded-full">v7.0</span></h1>
+        <h1 class="text-xl font-bold tracking-wide">TOEIC 700+ 雲端動態大數據單字庫 <span class="text-xs bg-purple-600 px-2 py-0.5 rounded-full">v7.1</span></h1>
       </div>
       <div id="auth-section" class="flex items-center gap-4 text-sm">
         <span id="user-display" class="hidden text-slate-300"></span>
@@ -55,12 +71,12 @@
   <main id="main-content" class="max-w-6xl mx-auto px-4 py-8 hidden">
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
       <div class="flex flex-wrap gap-2">
-        <button onclick="filterWords('all')" id="btn-all" class="px-5 py-2.5 rounded-xl font-semibold bg-blue-600 text-white shadow-md shadow-blue-100 transition">全部載入單字 (<span id="count-all">0</span>)</button>
+        <button onclick="filterWords('all')" id="btn-all" class="px-5 py-2.5 rounded-xl font-semibold bg-blue-600 text-white shadow-md transition">全部載入單字 (<span id="count-all">0</span>)</button>
         <button onclick="filterWords('fuzzy')" id="btn-fuzzy" class="px-5 py-2.5 rounded-xl font-semibold bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 transition">🟡 模糊複習 (<span id="count-fuzzy">0</span>)</button>
         <button onclick="filterWords('clear')" id="btn-clear" class="px-5 py-2.5 rounded-xl font-semibold bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 transition">🟢 清楚掌握 (<span id="count-clear">0</span>)</button>
       </div>
-      <div class="text-sm font-medium text-slate-600">
-        <i class="fa-solid fa-cloud-arrow-up text-green-500 mr-1"></i> 大數據模式：單字已由雲端大規模無縫加載
+      <div class="text-sm font-medium text-slate-600 bg-purple-50 text-purple-700 px-4 py-2 rounded-xl">
+        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> v7.1 嵌入式技術：完美相容所有 Mac 裝置，點擊即可就地翻譯！
       </div>
     </div>
 
@@ -73,19 +89,9 @@
     </div>
   </main>
 
-  <div id="popover-bubble" class="popover bg-slate-950 text-white p-4 rounded-xl shadow-2xl text-sm border border-slate-800">
-    <div class="flex justify-between items-start gap-4 mb-1.5">
-      <span id="popover-word" class="font-bold text-yellow-400 text-base"></span>
-      <button onclick="playPopoverAudio(event)" class="text-slate-400 hover:text-white transition p-1"><i class="fa-solid fa-volume-high"></i></button>
-    </div>
-    <div id="popover-ipa" class="text-xs text-slate-400 font-mono mb-2"></div>
-    <div id="popover-translation" class="text-slate-100 leading-relaxed font-medium"></div>
-    <div class="absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-3 h-3 bg-slate-950 rotate-45 border-r border-b border-slate-800"></div>
-  </div>
-
   <script>
     // ==========================================
-    // 🛠️ FIREBASE 金鑰配置
+    // 🛠️ FIREBASE 配置
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyBJngbs3_kCmJr-R6FxBqfwKblXyyu11Hg",
@@ -103,14 +109,12 @@
 
     // 系統變數
     let currentUser = null;
-    let loadedVocabulary = []; // 儲存從雲端全域庫抓下來的單字
-    let userProgress = {};     // 儲存目前使用者標記的狀態
+    let loadedVocabulary = []; 
+    let userProgress = {};     
     let currentFilter = 'all';
-    let popoverAudioWord = "";
-    let lastVisibleDoc = null; // 用於分頁流
-    const pageSize = 30;       // 每次動態向雲端調取 30 個單字
+    const pageSize = 30;       
+    let lastVisibleDoc = null; 
 
-    // 字典還原快取資料庫（網頁在運行時會自動從撈到的單字中建立字典，不需要寫死！）
     let dynamicMiniDict = {};
 
     // DOM 元素
@@ -125,16 +129,11 @@
     const authError = document.getElementById('auth-error');
     const userDisplay = document.getElementById('user-display');
     const logoutBtn = document.getElementById('logout-btn');
-    const popoverBubble = document.getElementById('popover-bubble');
-    const popoverWord = document.getElementById('popover-word');
-    const popoverIpa = document.getElementById('popover-ipa');
-    const popoverTranslation = document.getElementById('popover-translation');
     const loadMoreBlock = document.getElementById('load-more-block');
     const loadMoreBtn = document.getElementById('load-more-btn');
 
     let isRegisterMode = false;
 
-    // 帳號認證控制
     authSwitchBtn.addEventListener('click', (e) => {
       e.preventDefault();
       isRegisterMode = !isRegisterMode;
@@ -169,7 +168,7 @@
       if(code === 'auth/email-already-in-use') return '該信箱已被註冊。';
       if(code === 'auth/weak-password') return '密碼最少需 6 碼。';
       if(code === 'auth/wrong-password') return '密碼輸入錯誤。';
-      return '連線拒絕，請確認資料庫配置。';
+      return '連線拒絕，請確認資料庫規則。';
     }
 
     function toggleView(isLoggedIn) {
@@ -181,17 +180,12 @@
       }
     }
 
-    // ==========================================
-    // 🧠 核心大數據驅動大腦
-    // ==========================================
     function startApp() {
       toggleView(true);
-      // 1. 先抓取目前使用者的學習紀錄（清楚/模糊狀態）
       db.collection('users').doc(currentUser.uid).collection('progress').get()
         .then(snapshot => {
           userProgress = {};
           snapshot.forEach(doc => { userProgress[doc.id] = doc.data().status; });
-          // 2. 開始從全域單字庫動態抓取第一批單字
           loadedVocabulary = [];
           lastVisibleDoc = null;
           fetchGlobalVocab();
@@ -200,19 +194,16 @@
 
     function fetchGlobalVocab() {
       let query = db.collection('global_vocab').orderBy('id').limit(pageSize);
-      if (lastVisibleDoc) {
-        query = query.startAfter(lastVisibleDoc);
-      }
+      if (lastVisibleDoc) query = query.startAfter(lastVisibleDoc);
 
       query.get().then(snapshot => {
         if (snapshot.empty) {
           loadMoreBlock.classList.add('hidden');
           if(loadedVocabulary.length === 0) {
-            // 如果大數據庫是空的，自動引導使用者
             document.getElementById('vocabulary-container').innerHTML = `
               <div class="col-span-full text-center p-8 bg-white rounded-2xl border border-dashed border-slate-300">
                 <p class="text-lg font-bold text-slate-600 mb-2">雲端大數據單字庫目前是空的！</p>
-                <p class="text-sm text-slate-400">請在對話視窗中聯絡 AI，一鍵將數千個多益單字灌入資料庫中。</p>
+                <p class="text-sm text-slate-400">請在 Console 貼上注入指令，將 5,000 個單字灌入資料庫中。</p>
               </div>`;
           }
           return;
@@ -223,15 +214,13 @@
         snapshot.forEach(doc => {
           const data = doc.data();
           loadedVocabulary.push(data);
-          
-          // 智慧動態建立點擊字典庫映射，完全不需要手動寫死 miniDict！
           if(data.word) dynamicMiniDict[data.word.toLowerCase()] = `[${data.ipa || ''}] ${data.translation}`;
           if(data.collocation) dynamicMiniDict[data.collocation.toLowerCase()] = data.collocationTranslation || '';
         });
 
         loadMoreBlock.classList.remove('hidden');
         renderVocabulary();
-      }).catch(err => console.error("加載大數據單字庫失敗:", err));
+      }).catch(err => console.error("加載失敗:", err));
     }
 
     loadMoreBtn.addEventListener('click', () => { fetchGlobalVocab(); });
@@ -247,13 +236,13 @@
       }, { merge: true }).catch(err => console.error(err));
     }
 
-    // 動態網頁渲染
+    // 動態網頁渲染（v7.1 核心改良：就地嵌入式翻譯面板設計）
     function renderVocabulary() {
       const container = document.getElementById('vocabulary-container');
       container.innerHTML = '';
 
-      loadedVocabulary.forEach(item => {
-        const status = userProgress[item.id] || 'fuzzy'; // 沒標記過的一律預設為模糊
+      loadedVocabulary.forEach((item, index) => {
+        const status = userProgress[item.id] || 'fuzzy';
 
         if (currentFilter === 'fuzzy' && status !== 'fuzzy') return;
         if (currentFilter === 'clear' && status !== 'clear') return;
@@ -261,12 +250,12 @@
         const borderClass = status === 'clear' ? 'border-green-500 shadow-green-50' : 'border-yellow-400 shadow-yellow-50';
         const bgBadge = status === 'clear' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
 
+        // 智慧拆解例句：點擊時直接調用「就地切換面板」函數 toggleInlineTranslation
         const sentenceWords = item.sentence.split(' ');
         const wrappedSentence = sentenceWords.map(word => {
-          let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"“”]/g, "").toLowerCase();
-          // 如果字典庫有此字或大單字庫有記錄，即可點擊
+          let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"區域“”]/g, "").toLowerCase();
           if (dynamicMiniDict[cleanWord] || cleanWord === item.word.toLowerCase()) {
-            return `<span class="clickable-word text-blue-600 font-medium" onclick="showPopover(event, '${cleanWord}')">${word}</span>`;
+            return `<span class="clickable-word" onclick="toggleInlineTranslation(event, '${cleanWord}', '${item.id}_${index}')">${word}</span>`;
           }
           return word;
         }).join(' ');
@@ -299,6 +288,7 @@
                 <div class="text-xs text-slate-500 mt-0.5">${item.collocationTranslation}</div>
               </div>
             </div>
+            
             <div class="border-t border-slate-100 pt-4 mt-2">
               <div class="flex justify-between items-center mb-2">
                 <span class="text-xs font-bold text-slate-400 tracking-wider">📝 實戰商務例句</span>
@@ -306,6 +296,14 @@
               </div>
               <div class="text-slate-700 text-sm leading-relaxed mb-1.5">${wrappedSentence}</div>
               <div class="text-xs text-slate-500 font-medium">${item.sentenceTranslation}</div>
+              
+              <div id="inline-panel-${item.id}_${index}" class="inline-translation-panel mt-3 p-3 bg-slate-900 text-white rounded-xl text-xs border border-slate-800 shadow-inner">
+                <div class="flex justify-between items-center mb-1 border-b border-slate-800 pb-1">
+                  <span id="inline-word-${item.id}_${index}" class="font-bold text-yellow-400 text-sm uppercase"></span>
+                  <span id="inline-ipa-${item.id}_${index}" class="text-slate-400 font-mono"></span>
+                </div>
+                <div id="inline-trans-${item.id}_${index}" class="text-slate-200 font-medium mt-1 leading-relaxed"></div>
+              </div>
             </div>
           </div>`;
       });
@@ -366,32 +364,44 @@
       }
     }
 
-    // 💬 點擊單字彈窗
-    function showPopover(event, word) {
+    // ==========================================
+    // 💬 v7.1 終極解決：就地嵌入式面板切換邏輯
+    // ==========================================
+    function toggleInlineTranslation(event, word, elementId) {
       if (event) { event.stopPropagation(); event.preventDefault(); }
-      let info = dynamicMiniDict[word];
-      if (!info) {
-        // 彈性保底防當機
-        info = `[TOEIC] 點選大單字或聽整句即可開啟發音與完整說明。`;
-      }
-      const targetElement = event.currentTarget || event.target;
-      const rect = targetElement.getBoundingClientRect();
-      const parts = info.split(') ');
       
-      popoverWord.innerText = word.charAt(0).toUpperCase() + word.slice(1);
-      popoverIpa.innerText = parts[0].includes('[') ? parts[0] + ')' : '';
-      popoverTranslation.innerText = parts[1] || parts[0];
-      popoverAudioWord = word;
-      popoverBubble.style.display = 'block';
-      popoverBubble.style.top = `${window.scrollY + rect.top - popoverBubble.offsetHeight - 10}px`;
-      popoverBubble.style.left = `${window.scrollX + rect.left + (rect.width / 2) - (popoverBubble.offsetWidth / 2)}px`;
+      const panel = document.getElementById(`inline-panel-${elementId}`);
+      const wordTitle = document.getElementById(`inline-word-${elementId}`);
+      const ipaSpan = document.getElementById(`inline-ipa-${elementId}`);
+      const transDiv = document.getElementById(`inline-trans-${elementId}`);
+      
+      // 1. 如果點擊的單字面板目前是開著的，就將其收合關閉
+      if (panel.style.display === 'block') {
+        panel.style.display = 'none';
+        return;
+      }
+      
+      // 先把當前單字卡裡可能開著的其他面板全部暗中關閉，保持畫面整潔
+      const cardPanels = targetContainer = event.target.closest('.border-t').querySelectorAll('.inline-translation-panel');
+      cardPanels.forEach(p => p.style.display = 'none');
+
+      // 2. 獲取字典中英對照資訊
+      let info = dynamicMiniDict[word];
+      if (!info) info = `[TOEIC] 多益核心衍伸字彙。`;
+
+      const parts = info.split(') ');
+      const ipaText = parts[0].includes('[') ? parts[0] + ')' : '';
+      const translationText = parts[1] || parts[0];
+
+      // 3. 填入資訊並就地展開
+      wordTitle.innerText = word;
+      ipaSpan.innerText = ipaText;
+      transDiv.innerText = translationText;
+      panel.style.display = 'block';
+
+      // 4. 強制同步高階美音朗讀
       playAudio(word);
     }
-
-    function playPopoverAudio(event) { if (event) event.stopPropagation(); if (popoverAudioWord) playAudio(popoverAudioWord); }
-    document.addEventListener('click', (e) => {
-      if (!popoverBubble.contains(e.target) && !e.target.classList.contains('clickable-word')) { popoverBubble.style.display = 'none'; }
-    });
   </script>
 </body>
 </html>
