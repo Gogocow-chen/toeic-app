@@ -236,7 +236,9 @@
       }, { merge: true }).catch(err => console.error(err));
     }
 
-    // 動態網頁渲染（v7.1 核心改良：就地嵌入式翻譯面板設計）
+    // ==========================================
+    // 🎨 動態網頁渲染 - v7.2 安全防禦不當機版
+    // ==========================================
     function renderVocabulary() {
       const container = document.getElementById('vocabulary-container');
       container.innerHTML = '';
@@ -250,6 +252,69 @@
         const borderClass = status === 'clear' ? 'border-green-500 shadow-green-50' : 'border-yellow-400 shadow-yellow-50';
         const bgBadge = status === 'clear' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
 
+        // 🔒【v7.2 安全防禦關鍵】如果雲端資料缺少例句，給予保底空字串，100% 阻止 split 當機！
+        const rawSentence = item.sentence || "Please click the word above to study.";
+        const rawSentenceTranslation = item.sentenceTranslation || "請點擊上方單字進行學習。";
+
+        // 智慧拆解例句
+        const sentenceWords = rawSentence.split(' ');
+        const wrappedSentence = sentenceWords.map(word => {
+          let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"“”]/g, "").toLowerCase();
+          if (dynamicMiniDict[cleanWord] || (item.word && cleanWord === item.word.toLowerCase())) {
+            return `<span class="clickable-word" onclick="toggleInlineTranslation(event, '${cleanWord}', '${item.id}_${index}')">${word}</span>`;
+          }
+          return word;
+        }).join(' ');
+
+        container.innerHTML += `
+          <div class="word-card bg-white rounded-2xl p-6 border-l-8 ${borderClass} shadow-md relative flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-4">
+                <span class="text-xs px-2.5 py-1 rounded-full font-bold tracking-wider ${bgBadge}">${status === 'clear' ? '🟢 清楚' : '🟡 模糊'}</span>
+                <div class="flex gap-2">
+                  <button onclick="updateCloudStatus('${item.id}', 'fuzzy')" class="p-1 px-2.5 text-xs font-semibold rounded-lg border border-yellow-300 hover:bg-yellow-50 text-yellow-600 transition">🟡 模糊</button>
+                  <button onclick="updateCloudStatus('${item.id}', 'clear')" class="p-1 px-2.5 text-xs font-semibold rounded-lg border border-green-300 hover:bg-green-50 text-green-600 transition">🟢 清楚</button>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 mb-2">
+                <h3 class="text-2xl font-bold text-slate-800">${item.word || 'Unknown'}</h3>
+                <span class="text-sm font-mono text-slate-400">${item.ipa || ''}</span>
+                <button onclick="playAudio('${item.word || ''}')" class="text-blue-500 hover:text-blue-700 transition p-1 text-lg"><i class="fa-solid fa-volume-high"></i></button>
+              </div>
+              <h4 class="text-lg font-semibold text-blue-600 mb-3">${item.translation || '未提供翻譯'}</h4>
+              <div class="text-sm text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4 leading-relaxed">
+                <span class="font-bold text-slate-700">🌱 記憶法：</span>${item.etymology || '多益常考核心單字'}
+              </div>
+              <div class="bg-blue-50/50 p-3.5 rounded-xl border border-blue-100 mb-4">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold text-blue-800 tracking-wider">🎯 必考搭配詞</span>
+                  <button onclick="playAudio('${item.collocation || ''}')" class="text-blue-500 hover:text-blue-700 transition text-xs"><i class="fa-solid fa-volume-high"></i> 聽片語</button>
+                </div>
+                <div class="font-bold text-slate-800 text-sm">${item.collocation || 'N/A'}</div>
+                <div class="text-xs text-slate-500 mt-0.5">${item.collocationTranslation || ''}</div>
+              </div>
+            </div>
+            
+            <div class="border-t border-slate-100 pt-4 mt-2">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-slate-400 tracking-wider">📝 實戰商務例句</span>
+                <button onclick="playAudio('${rawSentence.replace(/'/g, "\\'")}')" class="text-blue-500 hover:text-blue-700 transition text-xs"><i class="fa-solid fa-volume-high"></i> 聽整句</button>
+              </div>
+              <div class="text-slate-700 text-sm leading-relaxed mb-1.5">${wrappedSentence}</div>
+              <div class="text-xs text-slate-500 font-medium">${rawSentenceTranslation}</div>
+              
+              <div id="inline-panel-${item.id}_${index}" class="inline-translation-panel mt-3 p-3 bg-slate-900 text-white rounded-xl text-xs border border-slate-800 shadow-inner">
+                <div class="flex justify-between items-center mb-1 border-b border-slate-800 pb-1">
+                  <span id="inline-word-${item.id}_${index}" class="font-bold text-yellow-400 text-sm uppercase"></span>
+                  <span id="inline-ipa-${item.id}_${index}" class="text-slate-400 font-mono"></span>
+                </div>
+                <div id="inline-trans-${item.id}_${index}" class="text-slate-200 font-medium mt-1 leading-relaxed"></div>
+              </div>
+            </div>
+          </div>`;
+      });
+      updateCounts();
+    }
         // 智慧拆解例句：點擊時直接調用「就地切換面板」函數 toggleInlineTranslation
         const sentenceWords = item.sentence.split(' ');
         const wrappedSentence = sentenceWords.map(word => {
