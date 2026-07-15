@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TOEIC 700+ 雲端智慧單字庫 v6.4</title>
+  <title>TOEIC 700+ 雲端智慧單字庫 v6.5</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -19,18 +19,20 @@
     }
     .clickable-word {
       cursor: pointer;
-      border-bottom: 1px dashed #cbd5e1;
+      border-bottom: 2px dashed #3b82f6; /* 加強可點擊下底線視覺 */
       display: inline-block;
-      transition: background-color 0.2s;
+      transition: all 0.2s;
+      padding: 0 2px;
     }
     .clickable-word:hover {
-      background-color: #f1f5f9;
+      background-color: #dbeafe;
       color: #1d4ed8;
+      border-radius: 4px;
     }
     .popover {
       position: absolute;
-      z-index: 50;
-      max-width: 250px;
+      z-index: 100; /* 確保在最上層 */
+      max-width: 280px;
       display: none;
     }
   </style>
@@ -41,7 +43,7 @@
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-3">
         <i class="fa-solid fa-graduation-cap text-yellow-400 text-2xl"></i>
-        <h1 class="text-xl font-bold tracking-wide">TOEIC 700+ 雲端智慧單字庫 <span class="text-xs bg-blue-600 px-2 py-0.5 rounded-full">v6.4</span></h1>
+        <h1 class="text-xl font-bold tracking-wide">TOEIC 700+ 雲端智慧單字庫 <span class="text-xs bg-blue-600 px-2 py-0.5 rounded-full">v6.5</span></h1>
       </div>
       <div id="auth-section" class="flex items-center gap-4 text-sm">
         <span id="user-display" class="hidden text-slate-300"></span>
@@ -80,17 +82,16 @@
       </div>
       <div class="text-sm text-slate-500 bg-slate-100 px-4 py-2 rounded-xl flex items-center gap-2">
         <i class="fa-solid fa-circle-info text-blue-500"></i>
-        <span>所有例句點擊字典功能與發音模組已全面校正完美！</span>
+        <span>已修復例句點擊事件！直接點擊虛線單字，可同步發音與顯示中文翻譯！</span>
       </div>
     </div>
 
     <div class="mb-12">
       <div class="flex items-center gap-3 mb-6 border-b border-slate-200 pb-3">
         <span class="text-3xl">👥</span>
-        <h2 class="text-2xl font-bold text-slate-900">情境一：人事與招募 (Recruitment & Personnel)</h2>
+        <h2 class="text-2xl font-bold text-slate-900">情情一：人事與招募 (Recruitment & Personnel)</h2>
       </div>
-      <div id="recruitment-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        </div>
+      <div id="recruitment-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
 
     <div class="mb-12">
@@ -98,19 +99,18 @@
         <span class="text-3xl">📜</span>
         <h2 class="text-2xl font-bold text-slate-900">情境二：合約與談判 (Contract & Negotiation)</h2>
       </div>
-      <div id="contract-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        </div>
+      <div id="contract-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
   </main>
 
-  <div id="popover-bubble" class="popover bg-slate-900 text-white p-4 rounded-xl shadow-2xl text-sm border border-slate-800">
-    <div class="flex justify-between items-start gap-2 mb-1.5">
+  <div id="popover-bubble" class="popover bg-slate-950 text-white p-4 rounded-xl shadow-2xl text-sm border border-slate-800">
+    <div class="flex justify-between items-start gap-4 mb-1.5">
       <span id="popover-word" class="font-bold text-yellow-400 text-base"></span>
-      <button onclick="playPopoverAudio()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-volume-high"></i></button>
+      <button onclick="playPopoverAudio(event)" class="text-slate-400 hover:text-white transition p-1"><i class="fa-solid fa-volume-high"></i></button>
     </div>
     <div id="popover-ipa" class="text-xs text-slate-400 font-mono mb-2"></div>
     <div id="popover-translation" class="text-slate-100 leading-relaxed font-medium"></div>
-    <div class="absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-3 h-3 bg-slate-900 rotate-45 border-r border-b border-slate-800"></div>
+    <div class="absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-3 h-3 bg-slate-950 rotate-45 border-r border-b border-slate-800"></div>
   </div>
 
   <script>
@@ -127,7 +127,6 @@
       measurementId: "G-S76H6VX1H0"
     };
 
-    // 初始化 Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -136,246 +135,160 @@
     // 📚 核心單字資料庫
     // ==========================================
     const defaultVocabularyList = [
-      // 情境一：人事與招募 (9個)
-      { id: "v1", category: "recruitment", word: "Candidate", ipa: "[ˈkændɪdət]", translation: "候選人、求職者", etymology: "來自拉丁文 <span class='text-red-500 font-bold'>candidus</span>（白色）。古羅馬候選人都會穿著「純白色外袍」象徵廉潔。", hint: "穿白色外袍的人 ➔ 候選人", collocation: "qualified candidate", collocationTranslation: "合格的候選人", sentence: "The human resources department is currently screening resumes to find the most qualified candidate.", sentenceTranslation: "人力資源部門目前正在篩選履歷，以尋找最合適的候選人。" },
-      { id: "v2", category: "recruitment", word: "Vacancy", ipa: "[ˈveɪkənsi]", translation: "空缺、職缺", etymology: "字根 <span class='text-red-500 font-bold'>vac-</span> 表示「空的」（如 vacation 假期、vacuum 真空）。-ancy 表示名詞狀態。", hint: "處於空置的狀態 ➔ 職缺", collocation: "fill a vacancy", collocationTranslation: "填補職缺", sentence: "The company has a vacancy for a marketing specialist.", sentenceTranslation: "這家公司有一個行銷專員的職缺。" },
-      { id: "v3", category: "recruitment", word: "Resume", ipa: "[ˈrezəmeɪ]", translation: "履歷表", etymology: "字首 <span class='text-red-500 font-bold'>re-</span>（重新）+ <span class='text-red-500 font-bold'>sume</span>（拿取）。原本是法語，字面意思是「重新拿出來的概述」。", hint: "重新拿出來的概述 ➔ 履歷表", collocation: "submit a resume", collocationTranslation: "投遞履歷", sentence: "Please submit a resume and a cover letter to apply for the position.", sentenceTranslation: "申請該職位請提交一份履歷與自薦信。" },
-      { id: "v4", category: "recruitment", word: "Reference", ipa: "[ˈrefərəns]", translation: "推薦信、推薦人、參考", etymology: "字首 <span class='text-red-500 font-bold'>re-</span>（回、往後）+ <span class='text-red-500 font-bold'>fer</span>（帶來）+ 名詞字尾 -ence。帶回去詢問前僱主的依據。", hint: "回頭尋求證明 ➔ 推薦信", collocation: "provide references", collocationTranslation: "提供推薦信/推薦人", sentence: "The hiring manager requested three professional references from the job applicant.", sentenceTranslation: "招聘經理要求求職者提供三位專業推薦人。" },
-      { id: "v5", category: "recruitment", word: "Recruit", ipa: "[rɪˈkruːt]", translation: "招募 (v.) / 新成員 (n.)", etymology: "字首 <span class='text-red-500 font-bold'>re-</span>（再）+ <span class='text-red-500 font-bold'>cruit/cresc</span>（生長）。字面意思是「使隊伍重新生長」。", hint: "讓團隊再度生長 ➔ 招募新血", collocation: "recruit new talent", collocationTranslation: "招募新人才", sentence: "The technology firm is planning to recruit fifty new software engineers this year.", sentenceTranslation: "這家科技公司計劃今年招募五十名新軟體工程師。" },
-      { id: "v6", category: "recruitment", word: "Undergo", ipa: "[ˌʌndərˈɡoʊ]", translation: "經歷、接受（檢查、培訓等）", etymology: "字首 <span class='text-red-500 font-bold'>under-</span>（在...下面、承受）+ <span class='text-red-500 font-bold'>go</span>（走）。在壓力或流程之下走過。", hint: "在重壓下走過 ➔ 經歷/接受", collocation: "undergo intensive training", collocationTranslation: "接受密集培訓", sentence: "All newly hired customer service agents must undergo a two-week training program.", sentenceTranslation: "所有新聘用的客服人員都必須接受為期兩週的培訓計劃。" },
+      { id: "v1", category: "recruitment", word: "Candidate", ipa: "[ˈkændɪdət]", translation: "候選人、求職者", etymology: "來自拉丁文 candidus（白色）。古羅馬候選人都會穿著「純白色外袍」象徵廉潔。", hint: "穿白色外袍的人 ➔ 候選人", collocation: "qualified candidate", collocationTranslation: "合格的候選人", sentence: "The human resources department is currently screening resumes to find the most qualified candidate.", sentenceTranslation: "人力資源部門目前正在篩選履歷，以尋找最合適的候選人。" },
+      { id: "v2", category: "recruitment", word: "Vacancy", ipa: "[ˈveɪkənsi]", translation: "空缺、職缺", etymology: "字根 vac- 表示「空的」（如 vacation 假期、vacuum 真空）。-ancy 表示名詞狀態。", hint: "處於空置的狀態 ➔ 職缺", collocation: "fill a vacancy", collocationTranslation: "填補職缺", sentence: "The company has a vacancy for a marketing specialist.", sentenceTranslation: "這家公司有一個行銷專員的職缺。" },
+      { id: "v3", category: "recruitment", word: "Resume", ipa: "[ˈrezəmeɪ]", translation: "履歷表", etymology: "字首 re-（重新）+ sume（拿取）。原本是法語，字面意思是「重新拿出來的概述」。", hint: "重新拿出來的概述 ➔ 履歷表", collocation: "submit a resume", collocationTranslation: "投遞履歷", sentence: "Please submit a resume and a cover letter to apply for the position.", sentenceTranslation: "申請該職位請提交一份履歷與自薦信。" },
+      { id: "v4", category: "recruitment", word: "Reference", ipa: "[ˈrefərəns]", translation: "推薦信、推薦人、參考", etymology: "字首 re-（回、往後）+ fer（帶來）+ 名詞字尾 -ence。帶回去詢問前僱主的依據。", hint: "回頭尋求證明 ➔ 推薦信", collocation: "provide references", collocationTranslation: "提供推薦信/推薦人", sentence: "The hiring manager requested three professional references from the job applicant.", sentenceTranslation: "招聘經理要求求職者提供三位專業推薦人。" },
+      { id: "v5", category: "recruitment", word: "Recruit", ipa: "[rɪˈkruːt]", translation: "招募 (v.) / 新成員 (n.)", etymology: "字首 re-（再）+ cruit/cresc（生長）。字面意思是「使隊伍重新生長」。", hint: "讓團隊再度生長 ➔ 招募新血", collocation: "recruit new talent", collocationTranslation: "招募新人才", sentence: "The technology firm is planning to recruit fifty new software engineers this year.", sentenceTranslation: "這家科技公司計劃今年招募五十名新軟體工程師。" },
+      { id: "v6", category: "recruitment", word: "Undergo", ipa: "[ˌʌndərˈɡoʊ]", translation: "經歷、接受（檢查、培訓等）", etymology: "字首 under-（在...下面、承受）+ go（走）。在壓力或流程之下走過。", hint: "在重壓下走過 ➔ 經歷/接受", collocation: "undergo intensive training", collocationTranslation: "接受密集培訓", sentence: "All newly hired customer service agents must undergo a two-week training program.", sentenceTranslation: "所有新聘用的客服人員都必須接受為期兩週的培訓計劃。" },
       { id: "v7", category: "recruitment", word: "Applicant", ipa: "[ˈæplɪkənt]", translation: "申請人、求職者", etymology: "動詞 apply（申請、套用）+ 表示人的字尾 -ant。", hint: "進行 apply 的人 ➔ 申請人", collocation: "successful applicant", collocationTranslation: "成功的申請者（錄取者）", sentence: "Each applicant is required to complete an online assessment.", sentenceTranslation: "每位申請人都需要完成一份線上評估。" },
       { id: "v8", category: "recruitment", word: "Personnel", ipa: "[ˌpɜːrsəˈnel]", translation: "（全體）員工、人事部門", etymology: "來自 person（人），後綴 -nel 強調整體人員。", hint: "拼寫注意兩個n與一個l ➔ 全體人員", collocation: "personnel department", collocationTranslation: "人事部門", sentence: "Only authorized personnel are allowed inside the server room.", sentenceTranslation: "只有授權人員才允許進入伺服器機房。" },
       { id: "v9", category: "recruitment", word: "Probation", ipa: "[proʊˈbeɪʃn]", translation: "試用期、緩刑", etymology: "來自 probe（探索、檢驗），字尾 -ation 表示期間、狀態。", hint: "用來檢驗你的期間 ➔ 試用期", collocation: "three-month probation", collocationTranslation: "三個月試用期", sentence: "After completing the probation period, he was offered a permanent contract.", sentenceTranslation: "在完成試用期後，他獲得了一份正式合約。" },
 
-      // 情境二：合約與談判 (20個)
       { id: "v10", category: "contract", word: "Agreement", ipa: "[əˈɡriːmənt]", translation: "協定、同意、合約", etymology: "動詞 agree（同意）+ 名詞字尾 -ment。", hint: "彼此達成共識的結果 ➔ 協定", collocation: "reach an agreement", collocationTranslation: "達成協定", sentence: "After hours of discussion, both companies finally reached an agreement.", sentenceTranslation: "經過數小時的討論，兩家公司終於達成了協定。" },
-      { id: "v11", category: "contract", word: "Contract", ipa: "[ˈkɑːntrækt]", translation: "合約、契約 (n.) / 收縮 (v.)", etymology: "字首 <span class='text-red-500 font-bold'>con-</span>（共同）+ 字根 <span class='text-red-500 font-bold'>tract</span>（拉）。把雙方拉在一起拉緊約束。", hint: "共同拉緊的約束 ➔ 合約", collocation: "sign a contract", collocationTranslation: "簽署合約", sentence: "Please review the clauses carefully before you sign the contract.", sentenceTranslation: "在您簽署合約前，請仔細審閱條款。" },
-      { id: "v12", category: "contract", word: "Negotiate", ipa: "[nɪˈɡoʊʃieɪt]", translation: "談判、協商", etymology: "來自拉丁文 neg-（不）+ otium（空閒、休閒）。字面意思是「不能閒著（要努力辦事/談判）」。", hint: "雙方不閒著、努力爭取權益 ➔ 談判", collocation: "negotiate a deal", collocationTranslation: "談判交易", sentence: "The purchasing manager will negotiate a better price with the supplier.", sentenceTranslation: "採購經理將與供應商談判以爭取更好的價格。" },
+      { id: "v11", category: "contract", word: "Contract", ipa: "[ˈkɑːntrækt]", translation: "合約、契約 (n.) / 收縮 (v.)", etymology: "字首 con-（共同）+ 字根 tract（拉）。把雙方拉在一起拉緊約束。", hint: "共同拉緊的約束 ➔ 合約", collocation: "sign a contract", collocationTranslation: "簽署合約", sentence: "Please review the clauses carefully before you sign the contract.", sentenceTranslation: "在您簽署合約前，請仔細審閱條款。" },
+      { id: "v12", category: "contract", word: "Negotiate", ipa: "[nɪˈɡoʊʃieɪt]", translation: "談判、協商", etymology: "來自拉丁文 neg-（不）+ otium（空閒、休閒）。字面意思是「不能閒著」。", hint: "雙方不閒著、努力爭取權益 ➔ 談判", collocation: "negotiate a deal", collocationTranslation: "談判交易", sentence: "The purchasing manager will negotiate a better price with the supplier.", sentenceTranslation: "採購經理將與供應商談判以爭取更好的價格。" },
       { id: "v13", category: "contract", word: "Clause", ipa: "[klɔːz]", translation: "（合約的）條款、子句", etymology: "與 close（關閉、限制）同源，字面意思是「有限制性的規定」。", hint: "用來限制雙方的框框 ➔ 條款", collocation: "termination clause", collocationTranslation: "終止條款", sentence: "The contract includes a strict termination clause in case of non-performance.", sentenceTranslation: "合約中包含一項針對不履行合約的嚴格終止條款。" },
-      { id: "v14", category: "contract", word: "Obligation", ipa: "[ˌɑːblɪˈɡeɪʃn]", translation: "義務、責任", etymology: "字首 <span class='text-red-500 font-bold'>ob-</span>（去、朝向）+ 字根 <span class='text-red-500 font-bold'>lig</span>（綁、綁定）。被事情綁住不得不做。", hint: "被綁定住非做不可的事 ➔ 義務", collocation: "legal obligation", collocationTranslation: "法律義務", sentence: "Both parties have a legal obligation to complete the project on time.", sentenceTranslation: "雙方均有法律義務按時完成專案。" },
-      { id: "v15", category: "contract", word: "Bilateral", ipa: "[ˌbaɪˈlætərəl]", translation: "雙邊的、雙方的", etymology: "字首 <span class='text-red-500 font-bold'>bi-</span>（兩個）+ 字根 <span class='text-red-500 font-bold'>later</span>（邊、側面）。", hint: "有兩個側面的 ➔ 雙邊的", collocation: "bilateral agreement", collocationTranslation: "雙邊協定", sentence: "They signed a bilateral agreement to boost trading between the two firms.", sentenceTranslation: "他們簽署了一項雙邊協定以促進兩家公司之間的貿易。" },
-      { id: "v16", category: "contract", word: "Invalid", ipa: "[ɪnˈvælɪd]", translation: "無效的、作廢的", etymology: "字首 <span class='text-red-500 font-bold'>in-</span>（否定的，不）+ valid（有效的、強壯的）。", hint: "不具有強壯效力的 ➔ 無效的", collocation: "render invalid", collocationTranslation: "使...失效、作廢", sentence: "Without a proper signature, this document is rendered invalid.", sentenceTranslation: "若無適當簽名，此文件將被視為無效。" },
-      { id: "v17", category: "contract", word: "Renew", ipa: "[rɪˈnuː]", translation: "續約、更新", etymology: "字首 <span class='text-red-500 font-bold'>re-</span>（重新）+ new（新的）。使合約重新變新。", hint: "讓效期重新變新 ➔ 續約", collocation: "renew the lease", collocationTranslation: "續訂租約", sentence: "We would like to renew our contract with your firm for another year.", sentenceTranslation: "我們希望與貴公司的合約能再續約一年。" },
-      { id: "v18", category: "contract", word: "Compromise", ipa: "[ˈkɑːmprəmaɪz]", translation: "妥協、讓步、折衷 (v./n.)", etymology: "字首 <span class='text-red-500 font-bold'>com-</span>（共同）+ promise（承諾）。雙方共同承諾各退一步。", hint: "共同承諾各退一步 ➔ 妥協", collocation: "reach a compromise", collocationTranslation: "達成妥協", sentence: "Neither side wanted to lose, but they had to compromise on the price.", sentenceTranslation: "雙方都不想輸，但他們必須在價格上做出妥協。" },
+      { id: "v14", category: "contract", word: "Obligation", ipa: "[ˌɑːblɪˈɡeɪʃn]", translation: "義務、責任", etymology: "字首 ob-（去、朝向）+ 字根 lig（綁、綁定）。被事情綁住不得不做。", hint: "被綁定住非做不可的事 ➔ 義務", collocation: "legal obligation", collocationTranslation: "法律義務", sentence: "Both parties have a legal obligation to complete the project on time.", sentenceTranslation: "雙方均有法律義務按時完成專案。" },
+      { id: "v15", category: "contract", word: "Bilateral", ipa: "[ˌbaɪˈlætərəl]", translation: "雙邊的、雙方的", etymology: "字首 bi-（兩個）+ 字根 later（邊、側面）。", hint: "有兩個側面的 ➔ 雙邊的", collocation: "bilateral agreement", collocationTranslation: "雙邊協定", sentence: "They signed a bilateral agreement to boost trading between the two firms.", sentenceTranslation: "他們簽署了一項雙邊協定以促進兩家公司之間的貿易。" },
+      { id: "v16", category: "contract", word: "Invalid", ipa: "[ɪnˈvælɪd]", translation: "無效的、作廢的", etymology: "字首 in-（不）+ valid（有效的、強壯的）。", hint: "不具有強壯效力的 ➔ 無效的", collocation: "render invalid", collocationTranslation: "使...失效、作廢", sentence: "Without a proper signature, this document is rendered invalid.", sentenceTranslation: "若無適當簽名，此文件將被視為無效。" },
+      { id: "v17", category: "contract", word: "Renew", ipa: "[rɪˈnuː]", translation: "續約、更新", etymology: "字首 re-（重新）+ new（新的）。使合約重新變新。", hint: "讓效期重新變新 ➔ 續約", collocation: "renew the lease", collocationTranslation: "續訂租約", sentence: "We would like to renew our contract with your firm for another year.", sentenceTranslation: "我們希望與貴公司的合約能再續約一年。" },
+      { id: "v18", category: "contract", word: "Compromise", ipa: "[ˈkɑːmprəmaɪz]", translation: "妥協、讓步、折衷 (v./n.)", etymology: "字首 com-（共同）+ promise（承諾）。雙方共同承諾各退一步。", hint: "共同承諾各退一步 ➔ 妥協", collocation: "reach a compromise", collocationTranslation: "達成妥協", sentence: "Neither side wanted to lose, but they had to compromise on the price.", sentenceTranslation: "雙方都不想輸，但他們必須在價格上做出妥協。" },
       { id: "v19", category: "contract", word: "Breach", ipa: "[briːtʃ]", translation: "違約、違反 (n./v.)", etymology: "與 break（打破）同源。字面意思是「打破（約定）」。", hint: "打破了協議 ➔ 違約", collocation: "breach of contract", collocationTranslation: "違約、違反合約", sentence: "Failing to deliver the goods on time is a serious breach of contract.", sentenceTranslation: "未能按時交付貨物是嚴重的違約行為。" },
       { id: "v20", category: "contract", word: "Exclusivity", ipa: "[ˌekskluːˈsɪvəti]", translation: "獨家性、排他性", etymology: "來自 exclude（排除、排他），字尾 -ity 表示性質。", hint: "把別人都排除在外的特權 ➔ 獨家性", collocation: "exclusivity agreement", collocationTranslation: "獨家授權協定", sentence: "The contract contains an exclusivity clause that prevents us from hiring rivals.", sentenceTranslation: "合約中包含一項排他條款，阻止我們聘用競爭對手。" },
-      { id: "v21", category: "contract", word: "Resolve", ipa: "[rɪˈzɑːlv]", translation: "解決（爭端）、下決心", etymology: "字首 <span class='text-red-500 font-bold'>re-</span>（再）+ 字根 <span class='text-red-500 font-bold'>solv/solut</span>（鬆開、溶解）。把糾結的問題鬆開。", hint: "把糾結的線重新解開 ➔ 解決", collocation: "resolve a dispute", collocationTranslation: "解決爭端", sentence: "The legal teams are working hard to resolve the contract dispute.", sentenceTranslation: "法律團隊正努力解決合約糾紛。" },
+      { id: "v21", category: "contract", word: "Resolve", ipa: "[rɪˈzɑːlv]", translation: "解決（爭端）、下決心", etymology: "字首 re-（再）+ 字根 solv/solut（鬆開、溶解）。把糾結的問題鬆開。", hint: "把糾結的線重新解開 ➔ 解決", collocation: "resolve a dispute", collocationTranslation: "解決爭端", sentence: "The legal teams are working hard to resolve the contract dispute.", sentenceTranslation: "法律團隊正努力解決合約糾紛。" },
       { id: "v22", category: "contract", word: "Liability", ipa: "[ˌlaɪəˈbɪləti]", translation: "法律責任、債務、累贅", etymology: "來自 liable（應負責的），字尾 -bility 表示名詞狀態。", hint: "必須承擔的責任 ➔ 法律責任", collocation: "limit liability", collocationTranslation: "限制法律責任", sentence: "The manufacturer accepted full liability for the defective products.", sentenceTranslation: "製造商接受對缺陷產品承擔全部法律責任。" },
-      { id: "v23", category: "contract", word: "Penalty", ipa: "[ˈpenəlti]", translation: "罰款、處罰", etymology: "來自 pen-（處罰、痛苦，如 pain 痛、penitent 悔改的）。", hint: "讓你感到痛苦的罰款 ➔ 罰金", collocation: "late penalty", collocationTranslation: "滯納金、逾期罰款", sentence: "There is a strict penalty for late payments specified in the contract.", sentenceTranslation: "合約中明確規定了對逾期付款的嚴格罰款。" },
+      { id: "v23", category: "contract", word: "Penalty", ipa: "[ˈpenəlti]", translation: "罰款、處罰", etymology: "來自 pen-（處罰、痛苦）。", hint: "讓你感到痛苦的罰款 ➔ 罰金", collocation: "late penalty", collocationTranslation: "滯納金、逾期罰款", sentence: "There is a strict penalty for late payments specified in the contract.", sentenceTranslation: "合約中明確規定了對逾期付款的嚴格罰款。" },
       { id: "v24", category: "contract", word: "Draft", ipa: "[dræft]", translation: "草稿、草擬 (n./v.)", etymology: "與 draw（拉、畫）同源，拉出大綱框架的圖紙。", hint: "拉出的大致輪廓 ➔ 草擬", collocation: "draft a contract", collocationTranslation: "起草合約", sentence: "The legal department has prepared the first draft of the agreement.", sentenceTranslation: "法律部門已準備好該協定的第一份草稿。" },
-      { id: "v25", category: "contract", word: "Consent", ipa: "[kənˈsent]", translation: "同意、贊成", etymology: "字首 <span class='text-red-500 font-bold'>con-</span>（共同）+ 字根 <span class='text-red-500 font-bold'>sent</span>（感覺）。大家感覺一樣、有共鳴。", hint: "大家感覺一致 ➔ 同意", collocation: "written consent", collocationTranslation: "書面同意書", sentence: "Neither party can disclose confidential data without written consent.", sentenceTranslation: "未經書面同意，任何一方均不得透露機密數據。" },
-      { id: "v26", category: "contract", word: "Execute", ipa: "[ˈeksɪkjuːt]", translation: "執行、履行（合約等）", etymology: "字首 <span class='text-red-500 font-bold'>ex-</span>（出）+ 字根 <span class='text-red-500 font-bold'>secut/sequ</span>（跟隨）。一路跟隨貫徹到底。", hint: "貫徹跟隨到底 ➔ 執行/履行", collocation: "execute a contract", collocationTranslation: "簽署並履行合約", sentence: "Once the document is signed, we can immediately execute the contract.", sentenceTranslation: "文件一經簽署，我們即可立刻履行合約。" },
-      { id: "v27", category: "contract", word: "Explicit", ipa: "[ɪkˈsplɪsɪt]", translation: "明確的、顯著的", etymology: "字首 <span class='text-red-500 font-bold'>ex-</span>（出）+ 字根 <span class='text-red-500 font-bold'>plic</span>（重疊、折疊）。把折疊的紙張攤開來給你看。", hint: "把折疊的部分攤開 ➔ 明確清楚的", collocation: "explicit terms", collocationTranslation: "明確條款", sentence: "We need explicit terms regarding the delivery schedule.", sentenceTranslation: "我們需要關於交付時程表的明確條款。" },
-      { id: "v28", category: "contract", word: "Arbitration", ipa: "[ˌɑːrbɪˈtreɪʃn]", translation: "仲裁", etymology: "來自 arbiter（公斷人、仲裁人），字尾 -ation 表示名詞流程。", hint: "請第三方公斷人來裁決 ➔ 仲裁", collocation: "dispute arbitration", collocationTranslation: "爭端仲裁", sentence: "If negotiations fail, the dispute will be settled by arbitration.", sentenceTranslation: "如果談判失敗，該爭端將通過仲裁解決。" },
-      { id: "v29", category: "contract", word: "Terminate", ipa: "[ˈtɜːrmɪneɪt]", translation: "終止、結束", etymology: "來自 termin-（邊界、終點，如 terminal 終點站、term 學期）。", hint: "走到了邊界/終點 ➔ 終止", collocation: "terminate a contract", collocationTranslation: "終止合約", sentence: "The client reserved the right to terminate the contract with a 30-day notice.", sentenceTranslation: "客戶保留在30天前通知終止合約的權力。" }
+      { id: "v25", category: "contract", word: "Consent", ipa: "[kənˈsent]", translation: "同意、贊成", etymology: "字首 con-（共同）+ 字根 sent（感覺）。大家感覺一樣。", hint: "大家感覺一致 ➔ 同意", collocation: "written consent", collocationTranslation: "書面同意書", sentence: "Neither party can disclose confidential data without written consent.", sentenceTranslation: "未經書面同意，任何一方均不得透露機密數據。" },
+      { id: "v26", category: "contract", word: "Execute", ipa: "[ˈeksɪkjuːt]", translation: "執行、履行（合約等）", etymology: "字首 ex-（出）+ 字根 secut/sequ（跟隨）。一路跟隨貫徹到底。", hint: "貫徹跟隨到底 ➔ 執行/履行", collocation: "execute a contract", collocationTranslation: "簽署並履行合約", sentence: "Once the document is signed, we can immediately execute the contract.", sentenceTranslation: "文件一經簽署，我們即可立刻履行合約。" },
+      { id: "v27", category: "contract", word: "Explicit", ipa: "[ɪkˈsplɪsɪt]", translation: "明確的、顯著的", etymology: "字首 ex-（出）+ 字根 plic（重疊、折疊）。把折疊的紙張攤開來給你看。", hint: "把折疊的部分攤開 ➔ 明確清楚的", collocation: "explicit terms", collocationTranslation: "明確條款", sentence: "We need explicit terms regarding the delivery schedule.", sentenceTranslation: "我們需要關於交付時程表的明確條款。" },
+      { id: "v28", category: "contract", word: "Arbitration", ipa: "[ˌɑːrbɪˈtreɪʃn]", translation: "仲裁", etymology: "來自 arbiter（公斷人），字尾 -ation 表示名詞流程。", hint: "請第三方公斷人來裁決 ➔ 仲裁", collocation: "dispute arbitration", collocationTranslation: "爭端仲裁", sentence: "If negotiations fail, the dispute will be settled by arbitration.", sentenceTranslation: "如果談判失敗，該爭端將通過仲裁解決。" },
+      { id: "v29", category: "contract", word: "Terminate", ipa: "[ˈtɜːrmɪneɪt]", translation: "終止、結束", etymology: "來自 termin-（邊界、終點）。", hint: "走到了邊界/終點 ➔ 終止", collocation: "terminate a contract", collocationTranslation: "終止合約", sentence: "The client reserved the right to terminate the contract with a 30-day notice.", sentenceTranslation: "客戶保留在30天前通知終止合約的權力。" }
     ];
 
     // ==========================================
-    // 📖 超完整多益字彙資料庫 (全方位校正所有單字、複數、時態與開頭大寫)
+    // 📖 超完整多益字彙資料庫
     // ==========================================
     const miniDict = {
-      // 人事招募與日常
-      "the": "[ðə] (art.) 這、那個（定冠詞）",
       "human": "[ˈhjuːmən] (adj.) 人類的、人性的",
-      "resources": "[rɪˈsɔːrsɪz] (n.) 資源（常用複數，HR代表人力資源）",
+      "resources": "[rɪˈsɔːrsɪz] (n.) 資源（常用複數）",
       "department": "[dɪˈpɑːrtmənt] (n.) 部門",
-      "is": "[ɪz] (v.) 是（第三人稱單數現在式）",
       "currently": "[ˈkɜːrəntli] (adv.) 目前、現在",
-      "screening": "[ˈskriːnɪŋ] (v.) 篩選、審查（screen 的現在分詞）",
+      "screening": "[ˈskriːnɪŋ] (v.) 篩選、審查",
       "resumes": "[ˈrezəmeɪz] (n.) 履歷表（複數）",
       "resume": "[ˈrezəmeɪ] (n.) 履歷表",
-      "to": "[tu] (prep.) 到、去、給、向",
-      "find": "[faɪnd] (v.) 尋找、找到",
+      "find": "[faɪnd] (v.) 尋找、發現",
       "most": "[moʊst] (adv.) 最、極",
       "qualified": "[ˈkwɑːlɪfaɪd] (adj.) 合格的、有資格的",
       "candidate": "[ˈkændɪdət] (n.) 候選人、求職者",
       "company": "[ˈkʌmpəni] (n.) 公司",
-      "has": "[hæz] (v.) 有（have 的第三人稱單數）",
-      "a": "[ə] (art.) 一個（不定冠詞）",
       "vacancy": "[ˈveɪkənsi] (n.) 空缺、職缺",
-      "for": "[fɔːr] (prep.) 為了、給、給予",
       "marketing": "[ˈmɑːrkɪtɪŋ] (n.) 行銷、市場推廣",
       "specialist": "[ˈspeʃəlɪst] (n.) 專員、專家",
-      "please": "[pliːz] (int.) 請",
       "submit": "[səbˈmɪt] (v.) 提交、呈遞",
-      "and": "[ænd] (conj.) 和、以及",
       "cover": "[ˈkʌvər] (n./adj.) 封面（cover letter 為自薦信）",
       "letter": "[ˈletər] (n.) 信件、字母",
       "apply": "[əˈplaɪ] (v.) 申請、應用",
       "position": "[pəˈzɪʃn] (n.) 職位、位置",
       "hiring": "[ˈhaɪərɪŋ] (adj./n.) 雇用、招聘",
       "manager": "[ˈmænɪdʒər] (n.) 經理",
-      "requested": "[rɪˈkwestɪd] (v.) 要求、請求（request 的過去式/過去分詞）",
+      "requested": "[rɪˈkwestɪd] (v.) 要求、請求",
       "three": "[θriː] (num.) 三個",
       "professional": "[prəˈfeʃənl] (adj.) 專業的",
-      "references": "[ˈrefərənsɪz] (n.) 推薦人、推薦信、參考文獻（reference 的複數）",
-      "from": "[frʌm] (prep.) 來自、從",
-      "job": "[dʒɑːb] (n.) 工作、職務",
+      "references": "[ˈrefərənsɪz] (n.) 推薦人（複數）",
+      "reference": "[ˈrefərəns] (n.) 推薦人、推薦信",
       "applicant": "[ˈæplɪkənt] (n.) 申請人、求職者",
       "technology": "[tekˈnɑːlədʒi] (n.) 科技、技術",
       "firm": "[fɜːrm] (n.) 公司、商號",
-      "planning": "[ˈplænɪŋ] (v.) 計劃（plan 的現在分詞）",
+      "planning": "[ˈplænɪŋ] (v.) 計劃",
       "recruit": "[rɪˈkruːt] (v.) 招募、吸收新成員",
       "fifty": "[ˈfɪfti] (num.) 五十",
-      "new": "[nuː] (adj.) 新的",
       "software": "[ˈsɔːftwer] (n.) 軟體",
-      "engineers": "[ˌendʒɪˈnɪrz] (n.) 工程師（engineer 的複數）",
-      "this": "[ðɪs] (det./pron.) 這個",
-      "year": "[jɪr] (n.) 年、年度",
-      "all": "[ɔːl] (adj./pron.) 所有的、全部",
-      "newly": "[ˈnuːli] (adv.) 新近地、剛",
-      "hired": "[ˈhaɪərd] (adj.) 新僱用的（hire 的過去分詞）",
-      "customer": "[ˈkʌstəmər] (n.) 顧客、客戶",
+      "engineers": "[ˌendʒɪˈnɪrz] (n.) 工程師（複數）",
+      "newly": "[ˈnuːli] (adv.) 新近地",
+      "hired": "[ˈhaɪərd] (adj.) 僱用的",
+      "customer": "[ˈkʌsmər] (n.) 顧客、客戶",
       "service": "[ˈsɜːrvɪs] (n.) 服務",
-      "agents": "[ˈeɪdʒənts] (n.) 代理人、客服專員（agent 的複數）",
-      "must": "[mʌst] (aux.) 必須",
+      "agents": "[ˈeɪdʒənts] (n.) 客服專員（複數）",
       "undergo": "[ˌʌndərˈɡoʊ] (v.) 經歷、接受（檢查/培訓）",
-      "two-week": "[tuː wiːk] (adj.) 為期兩週的",
       "training": "[ˈtreɪnɪŋ] (n.) 培訓、訓練",
       "program": "[ˈproʊɡræm] (n.) 計畫、課程",
-      "each": "[iːtʃ] (det./pron.) 每個、各自",
-      "required": "[rɪˈkwaɪərd] (v.) 需要、要求（require 的過去分詞）",
-      "complete": "[kəmˈpliːt] (v.) 完成 (adj.) 完整的",
-      "online": "[ˈɑːnlaɪn] (adj./adv.) 線上、網路",
       "assessment": "[əˈsesmənt] (n.) 評估、考核",
-      "only": "[ˈoʊnli] (adv./adj.) 只有、唯一的",
       "authorized": "[ˈɔːθəraɪzd] (adj.) 授權的、准許的",
-      "personnel": "[ˌpɜːrsəˈnel] (n.) （全體）員工、人事部門",
-      "are": "[ɑːr] (v.) 是（複數/第二人稱現在式）",
-      "allowed": "[əˈlaʊd] (v.) 被允許（allow 的過去分詞）",
+      "personnel": "[ˌpɜːrsəˈnel] (n.) （全體）員工",
+      "allowed": "[əˈlaʊd] (v.) 被允許",
       "inside": "[ˌɪnˈsaɪd] (prep./adv.) 在...裡面",
       "server": "[ˈsɜːrvər] (n.) 伺服器",
       "room": "[ruːm] (n.) 房間、空間",
-      "after": "[ˈæftər] (prep./conj.) 在...之後",
-      "completing": "[kəmˈpliːtɪŋ] (v.) 完成（complete 的現在分詞）",
       "probation": "[proʊˈbeɪʃn] (n.) 試用期、緩刑",
-      "period": "[ˈpɪriəd] (n.) 期間、時期",
-      "he": "[hiː] (pron.) 他",
-      "was": "[wʌz] (v.) 是（is/am 的過去式）",
-      "offered": "[ˈɔːfərd] (v.) 被提供、給予（offer 的過去分詞）",
-      "permanent": "[ˈpɜːrmənənt] (adj.) 永久的、正式的",
+      "permanent": "[ˈpɜːrmənənt] (adj.) 正式員工的、永久的",
       "contract": "[ˈkɑːntrækt] (n.) 合約、契約",
-
-      // 合約、談判與商務用語
-      "hours": "[ˈaʊərz] (n.) 小時（hour 的複數）",
-      "of": "[ʌv] (prep.) ...的、關於",
       "discussion": "[dɪˈskʌʃn] (n.) 討論、商討",
-      "both": "[boʊθ] (det./pron.) 雙方、兩者",
-      "companies": "[ˈkʌmpəniz] (n.) 公司（company 的複數）",
-      "finally": "[ˈfaɪnəli] (adv.) 終於、最後",
-      "reached": "[riːtʃt] (v.) 達到、抵達（reach 的過去式）",
+      "reached": "[riːtʃt] (v.) 達到、抵達",
       "agreement": "[əˈɡriːmənt] (n.) 協定、同意、合約",
       "review": "[rɪˈvjuː] (v./n.) 審查、覆審",
-      "clauses": "[ˈklɔːzɪz] (n.) 條款、細則（clause 的複數）",
+      "clauses": "[ˈklɔːzɪz] (n.) 條款、細則（複數）",
+      "clause": "[klɔːz] (n.) 條款",
       "carefully": "[ˈkerfəli] (adv.) 仔細地",
-      "before": "[bɪˈfɔːr] (prep./conj.) 在...之前",
-      "you": "[juː] (pron.) 你、你們",
       "sign": "[saɪn] (v.) 簽署、簽名",
       "purchasing": "[ˈpɜːrtʃəsɪŋ] (n.) 採購、購買",
-      "will": "[wɪl] (aux.) 將、將會",
       "negotiate": "[nɪˈgʊʃieɪt] (v.) 談判、協商",
-      "better": "[ˈbetər] (adj.) 更好的",
       "price": "[praɪs] (n.) 價格",
-      "with": "[wɪð] (prep.) 與、隨著、用",
       "supplier": "[səˈplaɪər] (n.) 供應商",
-      "includes": "[ɪnˈkluːdz] (v.) 包括、包含（include 的單數現在式）",
-      "strict": "[strɪkt] (adj.) 嚴格的",
       "termination": "[ˌtɜːrmɪˈneɪʃn] (n.) 終止、結束",
-      "clause": "[klɔːz] (n.) 條款",
-      "in": "[ɪn] (prep.) 在...裡面、處於...狀態",
-      "case": "[keɪs] (n.) 情況、案件",
-      "non-performance": "[nɑːn pərˈfɔːrməns] (n.) 不履行、違約",
-      "parties": "[ˈpɑːrtiz] (n.) 雙方、黨派、派對（party 的複數）",
-      "legal": "[ˈliːɡl] (adj.) 法律的、合法的",
       "obligation": "[ˌɑːblɪˈɡeɪʃn] (n.) 義務、責任",
-      "on": "[ɑːn] (prep.) 在...之上、準時",
-      "time": "[taɪm] (n.) 時間",
-      "they": "[ðeɪ] (pron.) 他們、她們、它們",
-      "signed": "[saɪnd] (v.) 簽署了（sign 的過去式/過去分詞）",
       "bilateral": "[ˌbaɪˈlætərəl] (adj.) 雙邊的、雙方的",
       "boost": "[buːst] (v.) 促進、提高、推動",
       "trading": "[ˈtreɪdɪŋ] (n.) 貿易、交易",
-      "between": "[bɪˈtwiːn] (prep.) 在...之間",
-      "two": "[tuː] (num.) 二、兩個",
-      "without": "[wɪˈðaʊt] (prep.) 沒有、無",
       "proper": "[ˈprɑːpər] (adj.) 適當的、妥當的",
       "signature": "[ˈsɪɡnətʃər] (n.) 簽名",
       "document": "[ˈdɑːkjumənt] (n.) 文件、公文",
-      "rendered": "[ˈrendərd] (v.) 使成為、呈交（render 的過去分詞）",
+      "rendered": "[ˈrendərd] (v.) 使成為、呈交",
       "invalid": "[ɪnˈvælɪd] (adj.) 無效的、作廢的",
-      "we": "[wiː] (pron.) 我們",
-      "would": "[wʊd] (aux.) 將會、想要（will 的過去式）",
-      "like": "[laɪk] (v.) 喜歡、想要",
       "renew": "[rɪˈnuː] (v.) 續約、更新",
-      "our": "[ˈaʊər] (pron.) 我們的",
-      "another": "[əˈnʌðər] (adj./pron.) 另一個、再一個",
-      "neither": "[ˈniːðər] (det./pron.) 兩者皆非、既不",
-      "side": "[saɪd] (n.) 一方、側面",
-      "wanted": "[ˈwɑːntɪd] (v.) 想要（want 的過去式）",
-      "lose": "[luːz] (v.) 輸、失去",
-      "but": "[bʌt] (conj.) 但是、然而",
-      "had": "[hæd] (v.) 必須、有（have 的過去式）",
       "compromise": "[ˈkɑːmprəmaɪz] (v./n.) 妥協、讓步、折衷",
-      "failing": "[ˈfeɪlɪŋ] (v./n.) 未能、失敗（fail 的現在分詞）",
       "deliver": "[dɪˈlɪvər] (v.) 交付、遞送",
-      "goods": "[ɡʊdz] (n.) 貨物（常用複數）",
+      "goods": "[ɡʊdz] (n.) 貨物",
       "serious": "[ˈsɪriəs] (adj.) 嚴重的、認真的",
       "breach": "[briːtʃ] (n./v.) 違約、違反",
-      "contains": "[kənˈteɪnz] (v.) 包含（contain 的第三人稱單數）",
       "exclusivity": "[ˌekskluːˈsɪvəti] (n.) 獨家性、排他性",
-      "prevents": "[prɪˈvents] (v.) 阻止、預防（prevent 的第三人稱單數）",
-      "us": "[ʌs] (pron.) 我們（受格）",
-      "rivals": "[ˈraɪvlz] (n.) 競爭對手（rival 的複數）",
-      "teams": "[tiːmz] (n.) 團隊、隊伍（team 的複數）",
-      "working": "[ˈwɜːrkɪŋ] (v.) 工作、努力中（work 的現在分詞）",
-      "hard": "[hɑːrd] (adv.) 努力地、艱苦地",
-      "resolve": "[rɪˈzɑːlv] (v.) 解決（爭端/問題）、下決心",
+      "prevents": "[prɪˈvents] (v.) 阻止、預防",
+      "rivals": "[ˈraɪvlz] (n.) 競爭對手（複數）",
+      "resolve": "[rɪˈzɑːlv] (v.) 解決（爭端）、下決心",
       "dispute": "[dɪˈspjuːt] (n./v.) 爭議、糾紛",
-      "manufacturer": "[ˌmænjuˈfæktʃərər] (n.) 製造商",
-      "accepted": "[ækˈseptɪd] (v.) 接受、承擔（accept 的過去式）",
-      "full": "[fʊl] (adj.) 全部的、飽滿的",
+      "accepted": "[ækˈseptɪd] (v.) 接受、承擔",
       "liability": "[ˌlaɪəˈbɪləti] (n.) 法律責任、賠償責任",
       "defective": "[dɪˈfektɪv] (adj.) 有缺陷的、瑕疵的",
-      "products": "[ˈprɑːdʌkts] (n.) 產品（product 的複數）",
-      "there": "[ðer] (adv.) 那裡（there is/are 表示「有」）",
+      "products": "[ˈprɑːdʌkts] (n.) 產品（複數）",
       "penalty": "[ˈpenəlti] (n.) 罰款、處罰",
-      "late": "[leɪt] (adj./adv.) 遲的、逾期的",
-      "payments": "[ˈpeɪmənts] (n.) 付款、款項（payment 的複數）",
-      "specified": "[ˈspesɪfaɪd] (v.) 具體規定、指定（specify 的過去分詞）",
-      "first": "[fɜːrst] (adj.) 第一的、首要的",
+      "payments": "[ˈpeɪmənts] (n.) 付款（複數）",
+      "specified": "[ˈspesɪfaɪd] (v.) 具體規定、指定",
       "draft": "[dræft] (n./v.) 草稿、草擬",
-      "can": "[kæn] (aux.) 能夠、可以",
       "disclose": "[dɪsˈkloʊz] (v.) 透露、公開",
       "confidential": "[ˌkɑːnfɪˈdenʃl] (adj.) 機密的",
       "data": "[ˈdeɪtə] (n.) 數據、資料",
-      "once": "[wʌns] (conj./adv.) 一旦、曾經",
-      "immediately": "[ɪˈmiːdiətli] (adv.) 立刻、馬上",
       "execute": "[ˈeksɪkjuːt] (v.) 執行、履行（合約等）",
-      "need": "[niːd] (v.) 需要",
       "explicit": "[ɪkˈsplɪsɪt] (adj.) 明確的、顯著的",
-      "terms": "[tɜːrmz] (n.) 條款、條件（term 的複數）",
+      "terms": "[tɜːrmz] (n.) 條款（複數）",
       "regarding": "[rɪˈɡɑːrdɪŋ] (prep.) 關於、至於",
-      "delivery": "[dɪˈlɪvəri] (n.) 交付、投遞、出貨",
+      "delivery": "[dɪˈlɪvəri] (n.) 交付、出貨",
       "schedule": "[ˈskedʒuːl] (n.) 日程表、計劃表",
-      "negotiations": "[nɪˌgʊʃiˈeɪʃnz] (n.) 談判、協商（negotiation 的複數）",
-      "fail": "[feɪl] (v.) 失敗、未能",
-      "settled": "[ˈsetld] (v.) 解決、清結（settle 的過去分詞）",
+      "negotiations": "[nɪˌgʊʃiˈeɪʃnz] (n.) 談判、協商（複數）",
       "arbitration": "[ˌɑːrbɪˈtreɪʃn] (n.) 仲裁",
       "client": "[ˈklaɪənt] (n.) 客戶、委託人",
-      "reserved": "[rɪˈzɜːrvd] (v.) 保留、預訂（reserve 的過去式）",
-      "right": "[raɪt] (n.) 權利 (adj.) 正確的",
-      "30-day": "30天的",
-      "notice": "[ˈnoʊtɪs] (n.) 通知、警告"
+      "reserved": "[rɪˈzɜːrvd] (v.) 保留、預訂",
+      "notice": "[ˈnoʊtɪs] (n.) 通知、注意"
     };
 
-    // ==========================================
-    // 🧠 系統全局變數
-    // ==========================================
     let currentUser = null;
     let userProgress = {};
     let currentFilter = 'all';
+    let popoverAudioWord = "";
 
-    // DOM 元素
+    // ==========================================
+    // 🔐 帳號管理
+    // ==========================================
     const authPanel = document.getElementById('auth-panel');
     const mainContent = document.getElementById('main-content');
     const authEmail = document.getElementById('auth-email');
@@ -393,12 +306,9 @@
     const popoverTranslation = document.getElementById('popover-translation');
 
     let isRegisterMode = false;
-    let popoverAudioWord = "";
 
-    // ==========================================
-    // 🔐 帳號管理
-    // ==========================================
-    authSwitchBtn.addEventListener('click', () => {
+    authSwitchBtn.addEventListener('click', (e) => {
+      e.preventDefault();
       isRegisterMode = !isRegisterMode;
       authTitle.innerText = isRegisterMode ? "學員註冊" : "學員登入";
       authSubmitBtn.innerText = isRegisterMode ? "立即註冊" : "登入";
@@ -483,7 +393,7 @@
     }
 
     // ==========================================
-    // 💾 雲端資料庫同步
+    // 💾 雲端資料庫儲存
     // ==========================================
     function initUserDatabase(uid) {
       const batch = db.batch();
@@ -533,7 +443,7 @@
     }
 
     // ==========================================
-    // 🎨 動態網頁渲染
+    // 🎨 動態網頁渲染 (重點優化：例句單字拆解與關聯)
     // ==========================================
     function renderVocabulary() {
       const recruitmentContainer = document.getElementById('recruitment-container');
@@ -551,29 +461,28 @@
         const borderClass = status === 'clear' ? 'border-green-500 shadow-green-50' : 'border-yellow-400 shadow-yellow-50';
         const bgBadge = status === 'clear' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
 
-       // 智慧拆解例句：自動移除標點符號並嘗試進行單字原形還原比對
+        // 智慧拆解例句：自動濾除標點符號，並比對 miniDict
         const sentenceWords = item.sentence.split(' ');
         const wrappedSentence = sentenceWords.map(word => {
-          // 清除標點符號
+          // 淨化單字：過濾標點符號
           let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"“”]/g, "").toLowerCase();
           
-          // 嘗試基礎的字尾還原（複數 s / 過去式 ed / 進行式 ing）
           let matchedKey = null;
           if (miniDict[cleanWord]) {
             matchedKey = cleanWord;
           } else if (cleanWord.endsWith('s') && miniDict[cleanWord.slice(0, -1)]) {
-            matchedKey = cleanWord.slice(0, -1); // 去除 s
+            matchedKey = cleanWord.slice(0, -1); 
           } else if (cleanWord.endsWith('ed') && miniDict[cleanWord.slice(0, -2)]) {
-            matchedKey = cleanWord.slice(0, -2); // 去除 ed
+            matchedKey = cleanWord.slice(0, -2); 
           } else if (cleanWord.endsWith('ing') && miniDict[cleanWord.slice(0, -3)]) {
-            matchedKey = cleanWord.slice(0, -3); // 去除 ing
+            matchedKey = cleanWord.slice(0, -3); 
           } else if (cleanWord.endsWith('ly') && miniDict[cleanWord.slice(0, -2)]) {
-            matchedKey = cleanWord.slice(0, -2); // 去除 ly
+            matchedKey = cleanWord.slice(0, -2); 
           }
 
           if (matchedKey) {
-            // 用 event.stopPropagation() 防止彈窗被外層 document 的 click 監聽器秒殺關閉
-            return `<span class="clickable-word" onclick="showPopover(event, '${matchedKey}')">${word}</span>`;
+            // 使用 event 參數，並傳遞單字字串
+            return `<span class="clickable-word text-blue-600 font-medium" onclick="showPopover(event, '${matchedKey}')">${word}</span>`;
           }
           return word;
         }).join(' ');
@@ -668,7 +577,7 @@
     }
 
     // ==========================================
-    // 🔊 智慧優化語音發音模組
+    // 🔊 智慧語音發音模組
     // ==========================================
     function playAudio(text) {
       if ('speechSynthesis' in window) {
@@ -709,21 +618,15 @@
           selectedVoice = activeVoices.find(voice => voice.lang.includes('en-US'));
         }
         
-        if (!selectedVoice) {
-          selectedVoice = activeVoices.find(voice => voice.lang.startsWith('en'));
-        }
-        
         if (selectedVoice) {
           utterance.voice = selectedVoice;
         }
         
         utterance.lang = 'en-US';
-        utterance.rate = 0.80;   // 自然舒服的商務朗讀速度
+        utterance.rate = 0.80;   
         utterance.pitch = 1.0;
         
         window.speechSynthesis.speak(utterance);
-      } else {
-        alert("不支援語音發音");
       }
     }
 
@@ -734,14 +637,22 @@
     }
 
     // ==========================================
-    // 💬 點擊單字彈窗與翻譯
+    // 💬 點擊單字彈窗與翻譯 (核心修復：阻止冒泡事件)
     // ==========================================
     function showPopover(event, word) {
-      event.stopPropagation();
-      const info = miniDict[word];
-      if (!info) return;
+      // 關鍵修復：阻止事件向上冒泡，防止彈窗剛顯示就被 document click 關閉！
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
 
-      const rect = event.target.getBoundingClientRect();
+      const info = miniDict[word];
+      if (!info) {
+        console.log("查無此單字:", word);
+        return;
+      }
+
+      const rect = event.currentTarget.getBoundingClientRect();
       const parts = info.split(') ');
       const ipaAndPart = parts[0] + ')';
       const trans = parts[1] || "";
@@ -753,20 +664,30 @@
       popoverAudioWord = word;
 
       popoverBubble.style.display = 'block';
+      
+      // 計算相對於頁面的絕對位置，避免被卡在容器內
       popoverBubble.style.top = `${window.scrollY + rect.top - popoverBubble.offsetHeight - 10}px`;
       popoverBubble.style.left = `${window.scrollX + rect.left + (rect.width / 2) - (popoverBubble.offsetWidth / 2)}px`;
 
+      // 同步朗讀單字
       playAudio(word);
     }
 
-    function playPopoverAudio() {
+    function playPopoverAudio(event) {
+      if (event) {
+        event.stopPropagation();
+      }
       if (popoverAudioWord) {
         playAudio(popoverAudioWord);
       }
     }
 
-    document.addEventListener('click', () => {
-      popoverBubble.style.display = 'none';
+    // 點擊網頁任何其他地方關閉彈窗
+    document.addEventListener('click', (e) => {
+      // 只有當點擊的目標不是彈窗內部，也不是可點擊單字時才隱藏
+      if (!popoverBubble.contains(e.target) && !e.target.classList.contains('clickable-word')) {
+        popoverBubble.style.display = 'none';
+      }
     });
   </script>
 </body>
