@@ -576,64 +576,78 @@
       renderVocabulary();
     }
 
-    // ==========================================
-    // 🔊 智慧語音發音模組
+   // ==========================================
+    // 🔊 智慧語音發音模組 - 多益四國口音真人講師版 (v6.7)
     // ==========================================
     function playAudio(text) {
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); 
+        window.speechSynthesis.cancel(); // 立即停止當前播放
         
         const utterance = new SpeechSynthesisUtterance(text);
         const voices = window.speechSynthesis.getVoices();
         
-        const premiumUSNames = [
-          "Samantha (Enhanced)", 
-          "Samantha", 
-          "Ava (Enhanced)", 
-          "Ava", 
-          "Google US English", 
-          "Microsoft Zira"
-        ];
+        // 1. 定義多益常考的四國高品質旗艦語音庫名單
+        const toeicVoices = {
+          us: ["Ava (Enhanced)", "Ava", "Google US English", "Samantha (Enhanced)", "Samantha"], // 美國腔
+          gb: ["Serena (Enhanced)", "Serena", "Google UK English Female", "Daniel"],            // 英國腔
+          au: ["Karen (Enhanced)", "Karen", "Google AU English", "Catherine"],                  // 澳洲腔
+          ca: ["Moira (Enhanced)", "Moira"]                                                     // 加拿大腔
+        };
         
-        const activeVoices = voices.filter(voice => {
-          const name = voice.name.toLowerCase();
-          return !name.includes('keynote') && 
-                 !name.includes('bad') && 
-                 !name.includes('bell') && 
-                 !name.includes('cell') && 
-                 !name.includes('organ') && 
-                 !name.includes('freaky') &&
-                 !name.includes('jester') &&
-                 !name.includes('whisper') &&
-                 !name.includes('boing');
-        });
-        
+        // 2. 判斷點擊類型：如果是單一單字，維持標準美音；如果是句子或片語，隨機指派四國口音
         let selectedVoice = null;
-        for (const targetName of premiumUSNames) {
-          selectedVoice = activeVoices.find(voice => voice.name === targetName);
-          if (selectedVoice) break;
+        const isLongText = text.trim().includes(" "); // 包含空格代表是句子或片語
+        
+        if (isLongText) {
+          // 隨機抽選口音國籍 (美、英、澳、加)
+          const countries = ["us", "gb", "au", "ca"];
+          const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+          const targetList = toeicVoices[randomCountry];
+          
+          for (const name of targetList) {
+            selectedVoice = voices.find(v => v.name === name);
+            if (selectedVoice) {
+              console.log(`[多益聽力模擬] 派發口音：${randomCountry.toUpperCase()} 講師 (${selectedVoice.name})`);
+              break;
+            }
+          }
         }
         
+        // 3. 如果是單字，或者隨機口音沒配對成功，則啟用最高階的美音女聲
         if (!selectedVoice) {
-          selectedVoice = activeVoices.find(voice => voice.lang.includes('en-US'));
+          const defaultUSList = [...toeicVoices.us, ...toeicVoices.gb];
+          for (const name of defaultUSList) {
+            selectedVoice = voices.find(v => v.name === name);
+            if (selectedVoice) break;
+          }
         }
         
+        // 4. 退防機制：若系統沒裝高階語音，退而求其次尋找系統內內建的英美語系
+        if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('en-US'));
+        if (!selectedVoice) selectedVoice = voices.find(v => v.lang.startsWith('en'));
+        
+        // 5. 套用大師級語音設定
         if (selectedVoice) {
           utterance.voice = selectedVoice;
+          utterance.lang = selectedVoice.lang;
         }
         
-        utterance.lang = 'en-US';
-        utterance.rate = 0.80;   
+        // 調整為最溫和、聽得最清楚的多益官方擬真語速
+        utterance.rate = isLongText ? 0.88 : 0.80; 
         utterance.pitch = 1.0;
         
         window.speechSynthesis.speak(utterance);
       }
     }
 
+    // 確保 Mac 瀏覽器在網頁一開好就預先將所有高品質語音庫加載完畢
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = function() {
-        window.speechSynthesis.getVoices();
-      };
+      window.speechSynthesis.getVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          window.speechSynthesis.getVoices();
+        };
+      }
     }
 
     // ==========================================
