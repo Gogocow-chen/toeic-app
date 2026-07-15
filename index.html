@@ -551,12 +551,29 @@
         const borderClass = status === 'clear' ? 'border-green-500 shadow-green-50' : 'border-yellow-400 shadow-yellow-50';
         const bgBadge = status === 'clear' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
 
-        // 智慧拆解例句單字：支援清除逗號、句號，並轉換為小寫進行 miniDict 比對
+       // 智慧拆解例句：自動移除標點符號並嘗試進行單字原形還原比對
         const sentenceWords = item.sentence.split(' ');
         const wrappedSentence = sentenceWords.map(word => {
-          const cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").toLowerCase();
+          // 清除標點符號
+          let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"“”]/g, "").toLowerCase();
+          
+          // 嘗試基礎的字尾還原（複數 s / 過去式 ed / 進行式 ing）
+          let matchedKey = null;
           if (miniDict[cleanWord]) {
-            return `<span class="clickable-word" onclick="showPopover(event, '${cleanWord}')">${word}</span>`;
+            matchedKey = cleanWord;
+          } else if (cleanWord.endsWith('s') && miniDict[cleanWord.slice(0, -1)]) {
+            matchedKey = cleanWord.slice(0, -1); // 去除 s
+          } else if (cleanWord.endsWith('ed') && miniDict[cleanWord.slice(0, -2)]) {
+            matchedKey = cleanWord.slice(0, -2); // 去除 ed
+          } else if (cleanWord.endsWith('ing') && miniDict[cleanWord.slice(0, -3)]) {
+            matchedKey = cleanWord.slice(0, -3); // 去除 ing
+          } else if (cleanWord.endsWith('ly') && miniDict[cleanWord.slice(0, -2)]) {
+            matchedKey = cleanWord.slice(0, -2); // 去除 ly
+          }
+
+          if (matchedKey) {
+            // 用 event.stopPropagation() 防止彈窗被外層 document 的 click 監聽器秒殺關閉
+            return `<span class="clickable-word" onclick="showPopover(event, '${matchedKey}')">${word}</span>`;
           }
           return word;
         }).join(' ');
